@@ -10,3 +10,4 @@ flask-cors
 email-validator
 gunicorn
 psycopg2-binary
+litellm
