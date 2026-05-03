@@ -1,0 +1,13 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Secrets and DB
+backend/.env
+backend/*.db
+instance/
+
+# OS
+.DS_Store
