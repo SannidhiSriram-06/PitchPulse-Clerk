@@ -41,9 +41,9 @@ def build_crew(company_name: str, length: str, sections: list) -> Crew:
         ),
         tools=[company_web_search, company_financial_data],
         llm=llm,
-        verbose=True,
+        verbose=False,
         allow_delegation=False,
-        max_iter=4,
+        max_iter=8,
     )
 
     # ── AGENT 2: Analyst ─────────────────────────────────────────────────────
@@ -61,7 +61,7 @@ def build_crew(company_name: str, length: str, sections: list) -> Crew:
         ),
         tools=[],
         llm=llm,
-        verbose=True,
+        verbose=False,
         allow_delegation=False,
         max_iter=3,
     )
@@ -81,7 +81,7 @@ def build_crew(company_name: str, length: str, sections: list) -> Crew:
         ),
         tools=[],
         llm=llm,
-        verbose=True,
+        verbose=False,
         allow_delegation=False,
         max_iter=2,
     )
@@ -89,15 +89,22 @@ def build_crew(company_name: str, length: str, sections: list) -> Crew:
     # ── TASK 1: Research ──────────────────────────────────────────────────────
     research_task = Task(
         description=(
-            f"Research {company_name} thoroughly. Run multiple targeted web searches:\n"
-            f"1. '{company_name} latest news 2024 2025'\n"
-            f"2. '{company_name} products services revenue'\n"
-            f"3. '{company_name} leadership CEO strategy'\n"
-            f"4. '{company_name} competitors market position'\n"
-            f"Also fetch financial stub data.\n\n"
-            f"Compile ALL findings into a structured research summary. "
-            f"For every fact, note the source URL. "
-            f"Note how many search results were returned total."
+            f"Research {company_name} thoroughly using targeted web searches.\n\n"
+            f"IMPORTANT: You MUST run searches ONE AT A TIME. Do NOT call multiple "
+            f"tools simultaneously. Run one search, wait for the results, read them, "
+            f"then run the next search. This is critical to avoid overloading the model.\n\n"
+            f"Execute these searches sequentially, one after another:\n"
+            f"  Step 1: Search for '{company_name} latest news 2024 2025' — wait for results.\n"
+            f"  Step 2: Search for '{company_name} products services revenue' — wait for results.\n"
+            f"  Step 3: Search for '{company_name} leadership CEO strategy' — wait for results.\n"
+            f"  Step 4: Search for '{company_name} competitors market position' — wait for results.\n"
+            f"  Step 5: Fetch financial stub data for {company_name}.\n\n"
+            f"After ALL searches are complete, compile ALL findings into a structured "
+            f"research summary. For every fact, note the source URL. "
+            f"Note how many search results were returned total.\n\n"
+            f"Once all searches are complete, write a summary of maximum 200 words as plain "
+            f"sentences only. No markdown, no headers, no bullet points, no lists. Just plain "
+            f"prose. Do not call any more tools."
         ),
         expected_output=(
             "A detailed research summary including: company overview, recent news items "

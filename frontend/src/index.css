@@ -1,0 +1,51 @@
+@import '@fontsource/space-grotesk';
+@import "tailwindcss";
+
+:root {
+  --accent-blue: #3B82F6;
+  --danger: #EF4444;
+  --success: #22C55E;
+}
+
+[data-theme="dark"] {
+  --bg: #0A0A0A;
+  --surface: #111111;
+  --border: #222222;
+  --text: #FFFFFF;
+  --text-sec: #888888;
+  --text-primary: #FFFFFF;
+  --text-secondary: #888888;
+  --accent: #C8FF00;
+  --accent-text: #0A0A0A;
+  --accent-15: #C8FF0015;
+  --accent-20: #C8FF0020;
+  --accent-30: #C8FF0030;
+  --accent-40: #C8FF0040;
+}
+
+[data-theme="light"] {
+  --bg: #F5F5F0;
+  --surface: #FFFFFF;
+  --border: #E5E5E5;
+  --text: #1A1A1A;
+  --text-sec: #666666;
+  --text-primary: #1A1A1A;
+  --text-secondary: #666666;
+  --accent: #2563EB;
+  --accent-text: #FFFFFF;
+  --accent-15: #2563EB15;
+  --accent-20: #2563EB20;
+  --accent-30: #2563EB30;
+  --accent-40: #2563EB40;
+}
+
+* {
+  font-family: 'Space Grotesk', sans-serif;
+  box-sizing: border-box;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--text-primary);
+  margin: 0;
+}

@@ -12,6 +12,7 @@ class User(db.Model):
     tier = db.Column(db.String(50), default="free", nullable=False)
     briefs_used_this_hour = db.Column(db.Integer, default=0, nullable=False)
     hour_window_start = db.Column(db.DateTime(timezone=True), nullable=True)
+    preferences = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     # Relationships

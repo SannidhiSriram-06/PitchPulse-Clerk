@@ -7,4 +7,4 @@ sqlalchemy==2.0.36
 bcrypt
 PyJWT
 flask-cors
-email-validator
+email-validatorgunicorn

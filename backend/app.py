@@ -1,3 +1,4 @@
+import os
 import json
 import secrets
 import re
@@ -25,7 +26,7 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    CORS(app, origins=os.getenv("FRONTEND_URL", "*"))
 
     db.init_app(app)  # ← only here, NOT inside init_db()
 
@@ -216,6 +217,31 @@ def _register_routes(app):
         db.session.commit()
         return jsonify({"message": "Account deleted."}), 200
 
+    @app.route("/api/user/preferences", methods=["GET", "PATCH"])
+    @require_auth
+    def update_preferences():
+        if request.method == 'GET':
+            user = g.current_user
+            try:
+                prefs = json.loads(user.preferences) if user.preferences else {}
+            except Exception:
+                prefs = {}
+            return jsonify({'preferences': prefs}), 200
+
+        data = request.get_json() or {}
+        user = g.current_user
+        try:
+            existing = json.loads(user.preferences) if user.preferences else {}
+        except Exception:
+            existing = {}
+        allowed = {'default_length', 'default_view', 'show_watchlist', 'show_sources', 'theme'}
+        for key in allowed:
+            if key in data:
+                existing[key] = data[key]
+        user.preferences = json.dumps(existing)
+        db.session.commit()
+        return jsonify({'message': 'Preferences updated.', 'preferences': existing}), 200
+
     # ── Generate Brief ────────────────────────────────────────────────────────
 
     @app.route("/api/brief", methods=["POST"])
@@ -339,6 +365,17 @@ def _register_routes(app):
         briefs = query.order_by(Brief.created_at.desc()).all()
         return jsonify({"briefs": [b.to_dict() for b in briefs]}), 200
 
+    # ── Get Single Brief ──────────────────────────────────────────────────────
+
+    @app.route('/api/briefs/<int:brief_id>', methods=['GET'])
+    @require_auth
+    def get_brief(brief_id):
+        from models import Brief
+        brief = Brief.query.filter_by(id=brief_id, user_id=g.current_user.id).first()
+        if not brief:
+            return jsonify({'error': 'Brief not found'}), 404
+        return jsonify(brief.to_dict()), 200
+
     # ── Toggle Save Brief ─────────────────────────────────────────────────────
 
     @app.route("/api/briefs/<int:brief_id>/save", methods=["PATCH"])
@@ -413,7 +450,7 @@ def _register_routes(app):
 
     # ── Share: Generate Token ─────────────────────────────────────────────────
 
-    @app.route("/api/briefs/<int:brief_id>/share", methods=["GET"])
+    @app.route("/api/briefs/<int:brief_id>/share", methods=["GET", "POST"])
     @require_auth
     def get_share_token(brief_id):
         """
