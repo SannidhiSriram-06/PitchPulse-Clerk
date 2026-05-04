@@ -30,6 +30,13 @@ def validate_password(password: str) -> tuple[bool, str]:
         return False, "Password must be at least 8 characters."
     if len(password) > 128:
         return False, "Password is too long (max 128 chars)."
+    if not any(c.isupper() for c in password):
+        return False, "Password must contain at least one uppercase letter."
+    if not any(c.isdigit() for c in password):
+        return False, "Password must contain at least one number."
+    special_chars = "!@#$%^&*()_+-=[]{}|;:,.<>?"
+    if not any(c in special_chars for c in password):
+        return False, "Password must contain at least one special character from !@#$%^&*()_+-=[]{}|;:,.<>?."
     return True, ""
 
 

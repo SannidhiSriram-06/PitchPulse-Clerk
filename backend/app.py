@@ -6,6 +6,11 @@ from datetime import datetime, UTC, timedelta
 
 from flask import Flask, request, jsonify, g
 from flask_cors import CORS
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from flask_talisman import Talisman
+
+limiter = Limiter(key_func=get_remote_address)
 
 from config import Config
 from database import db, init_db
@@ -26,7 +31,9 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
+    Talisman(app, force_https=False, content_security_policy=False, frame_options="DENY")
     CORS(app, origins=os.getenv("FRONTEND_URL", "*"))
+    limiter.init_app(app)
 
     db.init_app(app)  # ← only here, NOT inside init_db()
 
@@ -87,6 +94,7 @@ def _register_routes(app):
     # ── Auth: Register ────────────────────────────────────────────────────────
 
     @app.route("/api/auth/register", methods=["POST"])
+    @limiter.limit("3 per minute", error_message="Too many attempts. Please wait a minute.")
     def register():
         """
         POST /api/auth/register
@@ -131,6 +139,7 @@ def _register_routes(app):
     # ── Auth: Login ───────────────────────────────────────────────────────────
 
     @app.route("/api/auth/login", methods=["POST"])
+    @limiter.limit("5 per minute", error_message="Too many attempts. Please wait a minute.")
     def login():
         """
         POST /api/auth/login
@@ -566,4 +575,4 @@ def _register_routes(app):
 
 if __name__ == "__main__":
     app = create_app()
-    app.run(debug=True, port=5001)
+    app.run(debug=False, port=5001)

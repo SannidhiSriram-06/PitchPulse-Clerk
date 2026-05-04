@@ -7,6 +7,7 @@ load_dotenv()
 class Config:
     # Flask
     SECRET_KEY = os.getenv("SECRET_KEY", "dev-secret-change-in-prod")
+    MAX_CONTENT_LENGTH = 1 * 1024 * 1024  # 1MB
 
     # JWT
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY", "dev-jwt-secret-change-in-prod")

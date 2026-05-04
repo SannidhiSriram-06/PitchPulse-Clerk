@@ -11,3 +11,5 @@ email-validator
 gunicorn
 psycopg2-binary
 litellm
+flask-limiter
+flask-talisman
