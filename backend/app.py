@@ -59,7 +59,7 @@ def _check_and_increment_rate_limit(user):
     Returns (allowed: bool, briefs_remaining: int | None)
     """
     if user.tier == "pro":
-        return True, None  # pro users have no limit
+        return True, None, None  # pro users have no limit
 
     now = datetime.now(UTC)
 
@@ -73,12 +73,13 @@ def _check_and_increment_rate_limit(user):
 
     if user.briefs_used_this_hour >= FREE_TIER_LIMIT:
         remaining = 0
-        return False, remaining
+        reset_in_minutes = max(1, int((user.hour_window_start + timedelta(hours=1) - now).total_seconds() / 60))
+        return False, remaining, reset_in_minutes
 
     user.briefs_used_this_hour += 1
     db.session.commit()
     remaining = FREE_TIER_LIMIT - user.briefs_used_this_hour
-    return True, remaining
+    return True, remaining, None
 
 
 # ── Routes ────────────────────────────────────────────────────────────────────
@@ -267,10 +268,11 @@ def _register_routes(app):
         user = g.current_user
 
         # Rate limit check
-        allowed, remaining = _check_and_increment_rate_limit(user)
+        allowed, remaining, reset_in_minutes = _check_and_increment_rate_limit(user)
         if not allowed:
             return jsonify({
-                "error": "Rate limit reached. Upgrade to Pro for unlimited briefs."
+                "error": "Rate limit reached. Upgrade to Pro for unlimited briefs.",
+                "reset_in_minutes": reset_in_minutes
             }), 429
 
         data = request.get_json(silent=True) or {}

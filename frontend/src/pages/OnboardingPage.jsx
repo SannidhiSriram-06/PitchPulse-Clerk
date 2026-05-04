@@ -29,6 +29,7 @@ export default function OnboardingPage() {
         setLoading(true)
         setPrefs({ defaultLength: length, defaultView: view })
         try {
+            await api.patch('/api/user/preferences', { default_length: length, default_view: view })
             for (const c of companies) {
                 await api.post('/api/watchlist', { company_name: c })
             }

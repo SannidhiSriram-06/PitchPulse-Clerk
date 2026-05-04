@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Bookmark, BookmarkCheck, Share2, RefreshCw, ThumbsUp, ThumbsDown, ChevronDown, ChevronUp, Sun, Moon } from 'lucide-react'
 import api from '../lib/api'
 import usePrefsStore from '../store/prefsStore'
+import useAuthStore from '../store/authStore'
 import useIsMobile from '../hooks/useIsMobile'
 import useThemeStore from '../store/themeStore'
 import CustomizePanel from '../components/CustomizePanel'
@@ -25,7 +26,8 @@ const CONFIDENCE_COLORS = {
 export default function BriefDisplayPage() {
     const { id, token } = useParams()
     const navigate = useNavigate()
-    const { defaultView } = usePrefsStore()
+    const { defaultView, showSources } = usePrefsStore()
+    const { user } = useAuthStore()
     const isMobile = useIsMobile()
     const { theme, toggleTheme } = useThemeStore()
     const isShareView = !!token
@@ -39,7 +41,7 @@ export default function BriefDisplayPage() {
     const [saved, setSaved] = useState(false)
     const [saving, setSaving] = useState(false)
     const [feedback, setFeedback] = useState({})
-    const [sourcesOpen, setSourcesOpen] = useState(false)
+    const [sourcesOpen, setSourcesOpen] = useState(showSources ?? false)
     const [copied, setCopied] = useState(false)
     const [poorQualityCount, setPoorQualityCount] = useState(0)
     const [showCustomize, setShowCustomize] = useState(false)
@@ -63,7 +65,7 @@ export default function BriefDisplayPage() {
             const keys = Object.keys(data.brief || {})
             if (keys.length > 0) setActiveTab(keys[0])
         } catch (e) {
-            setError('Could not load brief.')
+            setError(e.response?.data?.error || 'Could not load brief.')
         }
         setLoading(false)
     }
@@ -122,7 +124,7 @@ export default function BriefDisplayPage() {
 
     return (
         <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)' }}>
-            {isShareView && (
+            {isShareView && !user && (
                 <div className="w-full bg-[#C8FF00] text-black px-4 py-2 flex items-center justify-between text-sm font-medium">
                     <span>Generated with PitchPulse</span>
                     <a href="/register" className="underline font-bold">Get your free account →</a>
@@ -191,10 +193,9 @@ export default function BriefDisplayPage() {
                 {poorQualityCount >= 3 && (
                     <div style={{ background: '#1a1000', border: '1px solid var(--accent-40)', borderRadius: '6px', padding: '0.75rem 1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.875rem' }}>
                         <span style={{ color: 'var(--accent)' }}>Brief quality was poor? Let us know →</span>
-                        <a href="https://forms.google.com/placeholder" target="_blank" rel="noreferrer"
-                            style={{ color: 'var(--accent)', fontSize: '0.8rem', textDecoration: 'underline' }}>
+                        <span style={{ color: 'var(--accent)', fontSize: '0.8rem' }}>
                             Give feedback
-                        </a>
+                        </span>
                     </div>
                 )}
 

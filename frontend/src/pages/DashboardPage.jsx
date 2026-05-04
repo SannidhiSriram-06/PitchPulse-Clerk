@@ -12,7 +12,7 @@ import usePrefsStore from '../store/prefsStore'
 export default function DashboardPage() {
     const navigate = useNavigate()
     const { user, logout } = useAuthStore()
-    const { loadPrefs } = usePrefsStore()
+    const { loadPrefs, showWatchlist } = usePrefsStore()
 
     const [briefs, setBriefs] = useState([])
     const [watchlist, setWatchlist] = useState([])
@@ -21,13 +21,7 @@ export default function DashboardPage() {
     const [newCompany, setNewCompany] = useState('')
     const [userMenuOpen, setUserMenuOpen] = useState(false)
     const { theme, toggleTheme } = useThemeStore()
-    const [sidebarOpen, setSidebarOpen] = useState(() => {
-        if (typeof localStorage !== 'undefined') {
-            const saved = localStorage.getItem('sidebar_open')
-            if (saved !== null) return saved === 'true'
-        }
-        return true
-    })
+    const [sidebarOpen, setSidebarOpen] = useState(showWatchlist ?? true)
     const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
     const [showCustomize, setShowCustomize] = useState(false)
 

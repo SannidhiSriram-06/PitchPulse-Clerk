@@ -42,8 +42,11 @@ export default function SettingsPage() {
         setPwLoading(false)
     }
 
-    const handleSavePrefs = () => {
+    const handleSavePrefs = async () => {
         setPrefs({ defaultLength: length, defaultView: view })
+        try {
+            await api.patch('/api/user/preferences', { default_length: length, default_view: view })
+        } catch (e) { }
         setPrefsSaved(true)
         setTimeout(() => setPrefsSaved(false), 2000)
     }
@@ -189,6 +192,9 @@ export default function SettingsPage() {
                             style={{ background: 'var(--border)', border: 'none', borderRadius: '4px', padding: '0.6rem 1.25rem', color: '#555555', cursor: 'not-allowed', fontSize: '0.875rem', fontFamily: 'Space Grotesk, sans-serif', fontWeight: '700' }}>
                             Upgrade — Coming Soon
                         </button>
+                        <p style={{ color: 'var(--text-sec)', fontSize: '0.75rem', marginTop: '0.5rem', marginBottom: 0 }}>
+                            Pro tier coming soon. <a href="mailto:hello@pitchpulse.app" style={{ color: 'var(--accent)', textDecoration: 'none' }}>Join the waitlist →</a>
+                        </p>
                     </div>
                 </div>
 
