@@ -40,20 +40,22 @@ export default function LandingPage() {
                         AI-powered sales intelligence
                     </div>
                     <h1 style={{ fontSize: 'clamp(2rem, 8vw, 4.5rem)', fontWeight: '800', lineHeight: '1.05', letterSpacing: '-2px', marginBottom: '1.5rem' }}>
-                        Know your prospect<br />
-                        <span style={{ color: 'var(--accent)' }}>before you walk in</span><br />
-                        the door.
+                        Know your prospect.<br />
+                        <span style={{ color: 'var(--accent)' }}>Before you walk in.</span>
                     </h1>
                     <p style={{ fontSize: '1.125rem', color: 'var(--text-sec)', lineHeight: '1.7', marginBottom: '2.5rem', maxWidth: '540px' }}>
-                        Type a company name. Get a structured pre-meeting brief in under 60 seconds — news, financials, talking points, risks. Everything you need, nothing you don't.
+                        PitchPulse generates a complete AI sales brief for any company in under 60 seconds — news, financials, talking points, and risks. No tabs. No googling. Just show up prepared.
                     </p>
                     <div style={{ display: 'flex', gap: '1rem', flexDirection: isMobile ? 'column' : 'row', flexWrap: 'wrap' }}>
-                        <button
-                            onClick={() => navigate('/register')}
-                            style={{ background: 'var(--accent)', border: 'none', color: 'var(--accent-text)', padding: '0.875rem 2rem', borderRadius: '4px', cursor: 'pointer', fontSize: '1rem', fontWeight: '700', letterSpacing: '-0.3px' }}
-                        >
-                            Get Started — it's free
-                        </button>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                            <button
+                                onClick={() => navigate('/register')}
+                                style={{ background: 'var(--accent)', border: 'none', color: 'var(--accent-text)', padding: '0.875rem 2rem', borderRadius: '4px', cursor: 'pointer', fontSize: '1rem', fontWeight: '700', letterSpacing: '-0.3px' }}
+                            >
+                                Get your free brief →
+                            </button>
+                            <span style={{ fontSize: '0.75rem', color: 'var(--text-sec)', textAlign: 'center' }}>Free to use · No credit card · 30-second setup</span>
+                        </div>
                         <button
                             onClick={() => navigate('/login')}
                             style={{ background: 'none', border: '1px solid #333333', color: 'var(--text)', padding: '0.875rem 2rem', borderRadius: '4px', cursor: 'pointer', fontSize: '1rem' }}

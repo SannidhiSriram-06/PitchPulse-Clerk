@@ -75,6 +75,16 @@ export default function DashboardPage() {
         } catch (e) { }
     }
 
+    const deleteBrief = async (e, id) => {
+        e.stopPropagation()
+        if (window.confirm("Delete this brief?")) {
+            try {
+                await api.delete(`/api/briefs/${id}`)
+                setBriefs(prev => prev.filter(b => b.id !== id))
+            } catch (err) { console.error(err) }
+        }
+    }
+
     const handleLogout = () => {
         logout()
         navigate('/')
@@ -351,6 +361,12 @@ export default function DashboardPage() {
                                         {brief.saved && (
                                             <Bookmark size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} fill="var(--accent)" />
                                         )}
+                                    </div>
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-1.5rem', marginBottom: '0.5rem', position: 'relative', zIndex: 10 }}>
+                                        <button onClick={(e) => deleteBrief(e, brief.id)}
+                                            style={{ background: 'none', border: 'none', color: 'var(--text-sec)', cursor: 'pointer', padding: '0.2rem', marginLeft: '0.5rem' }}>
+                                            <X size={14} />
+                                        </button>
                                     </div>
                                     <p style={{ color: 'var(--text-sec)', fontSize: '0.8rem', lineHeight: '1.5', marginBottom: '1rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
                                         {snippet}

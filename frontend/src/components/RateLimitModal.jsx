@@ -13,9 +13,15 @@ export default function RateLimitModal({ resetInMinutes, onClose }) {
       onClick={onClose}
     >
       <div
-        className="bg-[#111] border border-[#222] rounded-2xl p-6 max-w-sm w-full mx-4 space-y-4"
+        className="bg-[#111] border border-[#222] rounded-2xl p-6 max-w-sm w-full mx-4 space-y-4 relative"
         onClick={e => e.stopPropagation()}
       >
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-400 hover:text-white"
+        >
+          &times;
+        </button>
         <h2 className="text-white text-xl font-bold">Hourly limit reached</h2>
         <p className="text-gray-300 text-sm">
           You've used your 3 free briefs this hour.

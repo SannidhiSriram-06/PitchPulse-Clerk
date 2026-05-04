@@ -13,12 +13,26 @@ export default function AuthPage() {
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
     const [error, setError] = useState('')
+    const [emailError, setEmailError] = useState('')
     const [loading, setLoading] = useState(false)
+
+    const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+    
+    const passwordReqs = {
+        length: password.length >= 8,
+        uppercase: /[A-Z]/.test(password),
+        number: /[0-9]/.test(password),
+        special: /[!@#$%^&*]/.test(password)
+    }
+    const isPasswordValid = Object.values(passwordReqs).every(Boolean)
 
     const handleSubmit = async () => {
         setError('')
+        setEmailError('')
         if (!email || !password) { setError('Email and password are required.'); return }
-        if (password.length < 8) { setError('Password must be at least 8 characters.'); return }
+        if (!isValidEmail(email)) { setEmailError('Please enter a valid email address.'); return }
+        
+        if (mode === 'register' && !isPasswordValid) { setError('Password does not meet all requirements.'); return }
 
         setLoading(true)
         try {
@@ -70,11 +84,12 @@ export default function AuthPage() {
                 <div style={{ marginBottom: '1rem' }}>
                     <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-sec)', marginBottom: '0.4rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Email</label>
                     <input
-                        type="email" value={email} onChange={(e) => setEmail(e.target.value)}
+                        type="email" value={email} onChange={(e) => { setEmail(e.target.value); setEmailError('') }}
                         onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
                         placeholder="you@company.com"
                         style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '0.75rem', color: 'var(--text)', fontSize: '0.875rem', fontFamily: 'Space Grotesk, sans-serif', outline: 'none', boxSizing: 'border-box' }}
                     />
+                    {emailError && <div style={{ color: '#EF4444', fontSize: '0.75rem', marginTop: '0.4rem' }}>{emailError}</div>}
                 </div>
 
                 <div style={{ marginBottom: '1.5rem' }}>
@@ -85,6 +100,22 @@ export default function AuthPage() {
                         placeholder="Min. 8 characters"
                         style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '4px', padding: '0.75rem', color: 'var(--text)', fontSize: '0.875rem', fontFamily: 'Space Grotesk, sans-serif', outline: 'none', boxSizing: 'border-box' }}
                     />
+                    {mode === 'register' && (
+                        <div style={{ marginTop: '0.75rem', display: 'flex', flexDirection: 'column', gap: '0.3rem' }}>
+                            <div style={{ fontSize: '0.75rem', color: passwordReqs.length ? '#22C55E' : 'var(--text-sec)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <span>{passwordReqs.length ? '✓' : '○'}</span> Min. 8 characters
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: passwordReqs.uppercase ? '#22C55E' : 'var(--text-sec)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <span>{passwordReqs.uppercase ? '✓' : '○'}</span> One uppercase letter
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: passwordReqs.number ? '#22C55E' : 'var(--text-sec)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <span>{passwordReqs.number ? '✓' : '○'}</span> One number
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: passwordReqs.special ? '#22C55E' : 'var(--text-sec)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <span>{passwordReqs.special ? '✓' : '○'}</span> One special character (!@#$%^&*)
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Error */}
