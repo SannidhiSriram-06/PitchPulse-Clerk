@@ -25,11 +25,7 @@ export default function DashboardPage() {
     const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
     const [showCustomize, setShowCustomize] = useState(false)
 
-    useEffect(() => {
-        if (typeof localStorage !== 'undefined') {
-            localStorage.setItem('sidebar_open', sidebarOpen)
-        }
-    }, [sidebarOpen])
+
 
     useEffect(() => {
         fetchData()
@@ -260,10 +256,10 @@ export default function DashboardPage() {
                 )}
 
                 {/* Mobile Drawer */}
-                {isMobile && mobileDrawerOpen && (
+                {isMobile && (
                     <>
-                        <div onClick={() => setMobileDrawerOpen(false)} style={{ position: 'fixed', inset: 0, background: '#0A0A0A99', zIndex: 499 }} />
-                        <div style={{ position: 'fixed', left: 0, top: 0, height: '100vh', width: '280px', background: 'var(--surface)', borderRight: '1px solid var(--border)', zIndex: 500, transition: 'transform 0.25s ease', transform: 'translateX(0)', padding: '1.25rem', overflowY: 'auto' }}>
+                        {mobileDrawerOpen && <div onClick={() => setMobileDrawerOpen(false)} style={{ position: 'fixed', inset: 0, background: '#0A0A0A99', zIndex: 499 }} />}
+                        <div style={{ position: 'fixed', left: 0, top: 0, height: '100vh', width: '280px', background: 'var(--surface)', borderRight: '1px solid var(--border)', zIndex: 500, transition: 'transform 0.25s ease', transform: mobileDrawerOpen ? 'translateX(0)' : 'translateX(-100%)', padding: '1.25rem', overflowY: 'auto', pointerEvents: mobileDrawerOpen ? 'auto' : 'none' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                                 <span style={{ fontSize: '1rem', fontWeight: '700', letterSpacing: '-0.5px' }}>
                                     Watchlist

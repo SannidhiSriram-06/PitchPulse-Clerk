@@ -1,9 +1,11 @@
 import { useEffect } from 'react';
 import usePrefsStore from '../store/prefsStore';
+import useThemeStore from '../store/themeStore';
 import api from '../lib/api';
 
 export default function CustomizePanel({ onClose }) {
-  const { theme, setTheme, defaultView, setDefaultView, showWatchlist, setShowWatchlist, showSources, setShowSources } = usePrefsStore();
+  const { defaultView, setDefaultView, showWatchlist, setShowWatchlist, showSources, setShowSources } = usePrefsStore();
+  const { theme, toggleTheme } = useThemeStore();
 
   useEffect(() => {
     const handleKey = (e) => { if (e.key === 'Escape') onClose(); };
@@ -20,9 +22,9 @@ export default function CustomizePanel({ onClose }) {
   };
 
   const handleTheme = (val) => {
-    setTheme(val);
-    document.documentElement.classList.toggle('dark', val === 'dark');
-    syncPrefs({ theme: val });
+    if (theme !== val) {
+      toggleTheme();
+    }
   };
 
   const handleDefaultView = (val) => {

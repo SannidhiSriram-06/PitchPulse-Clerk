@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import useBriefStore from './briefStore'
 
 const useAuthStore = create((set) => ({
     token: localStorage.getItem('token') || null,
@@ -14,6 +15,8 @@ const useAuthStore = create((set) => ({
         localStorage.removeItem('token')
         localStorage.removeItem('user')
         set({ token: null, user: null })
+        const { setCurrentBrief } = useBriefStore.getState()
+        setCurrentBrief(null)
     },
 
     setUser: (user) => {

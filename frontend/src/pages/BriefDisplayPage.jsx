@@ -64,6 +64,18 @@ export default function BriefDisplayPage() {
             setBrief(data.brief || {})
             const keys = Object.keys(data.brief || {})
             if (keys.length > 0) setActiveTab(keys[0])
+
+            if (data.feedback_summary) {
+                try {
+                    const parsedFeedback = typeof data.feedback_summary === 'string' 
+                        ? JSON.parse(data.feedback_summary) 
+                        : data.feedback_summary;
+                    setFeedback(parsedFeedback)
+                    setPoorQualityCount(Object.values(parsedFeedback).filter(v => v === 'down').length)
+                } catch (e) {
+                    console.error('Failed to parse feedback_summary', e)
+                }
+            }
         } catch (e) {
             setError(e.response?.data?.error || 'Could not load brief.')
         }
@@ -117,8 +129,18 @@ export default function BriefDisplayPage() {
     )
 
     if (error) return (
-        <div style={{ background: 'var(--bg)', minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#EF4444' }}>
-            {error}
+        <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)' }}>
+            <nav style={{ borderBottom: '1px solid var(--border)', padding: '0 1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: '56px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <button onClick={() => navigate('/dashboard')}
+                        style={{ background: 'none', border: 'none', color: 'var(--text-sec)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.875rem', fontFamily: 'Space Grotesk, sans-serif', padding: 0 }}>
+                        <ArrowLeft size={16} /> Back to Dashboard
+                    </button>
+                </div>
+            </nav>
+            <div style={{ padding: '2rem 1.5rem', display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 'calc(100vh - 56px)' }}>
+                <p style={{ color: '#EF4444', fontSize: '1rem' }}>{error}</p>
+            </div>
         </div>
     )
 

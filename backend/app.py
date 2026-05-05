@@ -313,7 +313,7 @@ def _register_routes(app):
         elapsed_ms = int((time.time() - start) * 1000)
 
         # Check for limited data
-        if not result or result.get("parse_error"):
+        if not result or result.get("brief", {}).get("parse_error"):
             return jsonify({"error": "We couldn't find enough data for this company. Try a different name or check spelling."}), 400
 
         # Update watchlist last_briefed_at if company is on watchlist

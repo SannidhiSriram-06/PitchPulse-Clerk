@@ -20,7 +20,7 @@ const useBriefStore = create((set) => ({
     },
 
     saveBrief: async (briefId) => {
-        const res = await api.patch(`/api/brief/${briefId}/save`)
+        const res = await api.patch(`/api/briefs/${briefId}/save`)
         return res.data
     },
 
