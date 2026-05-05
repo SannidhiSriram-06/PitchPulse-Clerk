@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { startTour } from '../hooks/useTour'
 import { useNavigate } from 'react-router-dom'
 import { Plus, LogOut, Settings, Clock, Bookmark, Zap, X, Sun, Moon, ChevronLeft, ChevronRight, Menu } from 'lucide-react'
 import useAuthStore from '../store/authStore'
@@ -29,6 +30,9 @@ export default function DashboardPage() {
 
     useEffect(() => {
         fetchData()
+        if (!localStorage.getItem('tour_completed')) {
+            setTimeout(() => startTour(), 1500)
+        }
     }, [])
 
     const fetchData = async () => {
@@ -131,16 +135,20 @@ export default function DashboardPage() {
                         </span>
                     )}
 
-                    <input
+                    <input id="search-bar"
                         value={search} onChange={(e) => setSearch(e.target.value)}
                         placeholder="Search briefs..."
                         style={{ flex: 1, maxWidth: '400px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '4px', padding: '0.5rem 0.75rem', color: 'var(--text)', fontSize: '0.875rem', fontFamily: 'Space Grotesk, sans-serif', outline: 'none' }}
                     />
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
-                        <button onClick={() => setShowCustomize(true)} title="Customize"
+                        <button id="customize-btn" onClick={() => setShowCustomize(true)} title="Customize"
                             style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-sec)', padding: '0.25rem' }}>
                             ⚙
+                        </button>
+                        <button id="tour-help-btn" onClick={startTour} title="Need a refresher?"
+                            style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-sec)', padding: '0.25rem', fontSize: '1rem', fontWeight: 'bold' }}>
+                            ?
                         </button>
                         <button onClick={toggleTheme} style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '4px', padding: '0.4rem', color: 'var(--text-sec)', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                             {theme === 'dark' ? <Sun size={14} /> : <Moon size={14} />}
@@ -189,7 +197,7 @@ export default function DashboardPage() {
 
                 {/* Sidebar */}
                 {!isMobile && (
-                    <aside style={{ width: sidebarOpen ? '240px' : '48px', borderRight: '1px solid var(--border)', padding: sidebarOpen ? '1.25rem' : '1.25rem 0.25rem', overflowY: 'auto', flexShrink: 0, transition: 'width 0.2s ease', position: 'relative' }}>
+                    <aside id="watchlist-sidebar" style={{ width: sidebarOpen ? '240px' : '48px', borderRight: '1px solid var(--border)', padding: sidebarOpen ? '1.25rem' : '1.25rem 0.25rem', overflowY: 'auto', flexShrink: 0, transition: 'width 0.2s ease', position: 'relative' }}>
                         <button onClick={() => setSidebarOpen(!sidebarOpen)} style={{ position: 'absolute', top: '0.75rem', right: '0.25rem', background: 'none', border: 'none', color: 'var(--text-sec)', cursor: 'pointer', padding: '0.2rem', zIndex: 10 }}>
                             {sidebarOpen ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
                         </button>
@@ -203,29 +211,35 @@ export default function DashboardPage() {
                             <p style={{ color: '#444444', fontSize: '0.8rem', marginBottom: '1rem' }}>No companies pinned yet. Add a company below to get started.</p>
                         ) : (
                             watchlist.map((item) => (
-                            <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: sidebarOpen ? 'space-between' : 'center', padding: '0.5rem 0', borderBottom: '1px solid var(--border)', gap: '0.5rem' }}>
+                            <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: sidebarOpen ? 'space-between' : 'center', padding: '0.75rem 0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', gap: '0.5rem', borderRadius: '6px', transition: 'background 0.2s', margin: '0 -0.5rem' }}
+                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                                 {sidebarOpen && (
                                     <div style={{ flex: 1, overflow: 'hidden' }}>
-                                        <div style={{ fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.company_name}</div>
-                                        {item.last_briefed_at ? (
-                                            <div style={{ fontSize: '0.65rem', color: '#444444' }}>Briefed {formatLastBriefed(item.last_briefed_at)}</div>
-                                        ) : (
-                                            <div style={{ fontSize: '0.65rem', color: '#555555' }}>Never briefed</div>
-                                        )}
+                                        <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '0.2rem' }}>{item.company_name}</div>
+                                        <div style={{ fontSize: '0.7rem', color: item.last_briefed_at ? '#666' : '#444' }}>
+                                            {item.last_briefed_at ? `Last briefed ${formatLastBriefed(item.last_briefed_at)}` : 'Never briefed'}
+                                        </div>
                                     </div>
                                 )}
-                                <div style={{ display: 'flex', flexDirection: sidebarOpen ? 'row' : 'column', gap: '0.25rem', flexShrink: 0, alignItems: 'center' }}>
+                                <div style={{ display: 'flex', flexDirection: sidebarOpen ? 'row' : 'column', gap: '0.4rem', flexShrink: 0, alignItems: 'center' }}>
                                     <button onClick={() => navigate(`/brief/new?company=${encodeURIComponent(item.company_name)}`)}
-                                        style={{ background: 'var(--accent-15)', border: '1px solid var(--accent-30)', borderRadius: '3px', padding: '0.2rem 0.4rem', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.65rem', fontFamily: 'Space Grotesk, sans-serif' }}>
-                                        <Zap size={10} />
+                                        style={{ background: 'rgba(200,255,0,0.1)', border: '1px solid rgba(200,255,0,0.2)', borderRadius: '4px', padding: '0.3rem 0.5rem', color: 'var(--accent)', cursor: 'pointer', transition: 'background 0.2s' }}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(200,255,0,0.2)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(200,255,0,0.1)'}
+                                        title="Brief Me">
+                                        <Zap size={12} />
                                     </button>
                                     {!sidebarOpen && (
-                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isWithin7Days(item.last_briefed_at) ? '#22C55E' : '#444444', marginTop: '2px' }} />
+                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isWithin7Days(item.last_briefed_at) ? '#C8FF00' : '#444444', marginTop: '4px' }} />
                                     )}
                                     {sidebarOpen && (
                                     <button onClick={() => removeFromWatchlist(item.id)}
-                                        style={{ background: 'none', border: 'none', color: '#444444', cursor: 'pointer', padding: '0.2rem' }}>
-                                        <X size={12} />
+                                        style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: '0.3rem', transition: 'color 0.2s' }}
+                                        onMouseEnter={(e) => e.currentTarget.style.color = '#FF4444'}
+                                        onMouseLeave={(e) => e.currentTarget.style.color = '#555'}
+                                        title="Remove">
+                                        <X size={14} />
                                     </button>
                                     )}
                                 </div>
@@ -275,23 +289,29 @@ export default function DashboardPage() {
                                 <p style={{ color: '#444444', fontSize: '0.8rem', marginBottom: '1rem' }}>No companies pinned yet. Add a company below to get started.</p>
                             ) : (
                                 watchlist.map((item) => (
-                                <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.5rem 0', borderBottom: '1px solid var(--border)', gap: '0.5rem' }}>
+                                <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', gap: '0.5rem', borderRadius: '6px', transition: 'background 0.2s', margin: '0 -0.5rem' }}
+                                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+                                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                                     <div style={{ flex: 1, overflow: 'hidden' }}>
-                                        <div style={{ fontSize: '0.8rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.company_name}</div>
-                                        {item.last_briefed_at ? (
-                                            <div style={{ fontSize: '0.65rem', color: '#444444' }}>Briefed {formatLastBriefed(item.last_briefed_at)}</div>
-                                        ) : (
-                                            <div style={{ fontSize: '0.65rem', color: '#555555' }}>Never briefed</div>
-                                        )}
+                                        <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '0.2rem' }}>{item.company_name}</div>
+                                        <div style={{ fontSize: '0.7rem', color: item.last_briefed_at ? '#666' : '#444' }}>
+                                            {item.last_briefed_at ? `Last briefed ${formatLastBriefed(item.last_briefed_at)}` : 'Never briefed'}
+                                        </div>
                                     </div>
-                                    <div style={{ display: 'flex', gap: '0.25rem', flexShrink: 0 }}>
+                                    <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
                                         <button onClick={() => { setMobileDrawerOpen(false); navigate(`/brief/new?company=${encodeURIComponent(item.company_name)}`) }}
-                                            style={{ background: 'var(--accent-15)', border: '1px solid var(--accent-30)', borderRadius: '3px', padding: '0.2rem 0.4rem', color: 'var(--accent)', cursor: 'pointer', fontSize: '0.65rem', fontFamily: 'Space Grotesk, sans-serif' }}>
-                                            <Zap size={10} />
+                                            style={{ background: 'rgba(200,255,0,0.1)', border: '1px solid rgba(200,255,0,0.2)', borderRadius: '4px', padding: '0.3rem 0.5rem', color: 'var(--accent)', cursor: 'pointer', transition: 'background 0.2s' }}
+                                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(200,255,0,0.2)'}
+                                            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(200,255,0,0.1)'}
+                                            title="Brief Me">
+                                            <Zap size={12} />
                                         </button>
                                         <button onClick={() => removeFromWatchlist(item.id)}
-                                            style={{ background: 'none', border: 'none', color: '#444444', cursor: 'pointer', padding: '0.2rem' }}>
-                                            <X size={12} />
+                                            style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: '0.3rem', transition: 'color 0.2s' }}
+                                            onMouseEnter={(e) => e.currentTarget.style.color = '#FF4444'}
+                                            onMouseLeave={(e) => e.currentTarget.style.color = '#555'}
+                                            title="Remove">
+                                            <X size={14} />
                                         </button>
                                     </div>
                                 </div>
@@ -313,26 +333,52 @@ export default function DashboardPage() {
                 )}
 
                 {/* Main */}
-                <main style={{ flex: 1, padding: isMobile ? '1.5rem 1rem' : '1.5rem', overflowY: 'auto', width: '100%' }}>
-                    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'space-between', marginBottom: '1.5rem', gap: '1rem' }}>
+                <main style={{ flex: 1, padding: isMobile ? '1.5rem 1rem' : '2.5rem', overflowY: 'auto', width: '100%', background: 'var(--bg)' }}>
+                    <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'flex-start' : 'center', justifyContent: 'space-between', marginBottom: '2rem', gap: '1rem' }}>
                         <div>
-                            <h1 style={{ fontSize: 'clamp(1.25rem, 5vw, 1.75rem)', fontWeight: '700', letterSpacing: '-0.5px', marginBottom: '0.2rem' }}>Recent Briefs</h1>
-                            <p style={{ color: 'var(--text-sec)', fontSize: '0.8rem' }}>{briefs.length} brief{briefs.length !== 1 ? 's' : ''} generated</p>
+                            <h1 style={{ fontSize: 'clamp(1.5rem, 5vw, 2rem)', fontWeight: '700', letterSpacing: '-0.5px', marginBottom: '0.4rem' }}>Dashboard</h1>
+                            <p style={{ color: 'var(--text-sec)', fontSize: '0.9rem' }}>Welcome back. Here's your intelligence overview.</p>
                         </div>
-                        <button onClick={() => navigate('/brief/new')}
-                            style={{ width: isMobile ? '100%' : 'auto', background: 'var(--accent)', border: 'none', borderRadius: '4px', padding: '0.6rem 1.25rem', color: 'var(--accent-text)', fontWeight: '700', cursor: 'pointer', fontSize: '0.875rem', fontFamily: 'Space Grotesk, sans-serif' }}>
+                        <button id="generate-brief-btn" onClick={() => navigate('/brief/new')}
+                            style={{ width: isMobile ? '100%' : 'auto', background: 'var(--accent)', border: 'none', borderRadius: '8px', padding: '0.75rem 1.5rem', color: '#000', fontWeight: '700', cursor: 'pointer', fontSize: '0.875rem', fontFamily: 'Space Grotesk, sans-serif', boxShadow: '0 4px 14px 0 rgba(200,255,0,0.15)', transition: 'transform 0.2s' }}
+                            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}>
                             + Generate Brief
                         </button>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem', paddingBottom: isMobile ? '60px' : '0' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '3rem' }}>
+                        <div style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '1.5rem' }}>
+                            <div style={{ color: 'var(--text-sec)', fontSize: '0.8rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Total Briefs</div>
+                            <div style={{ color: '#C8FF00', fontSize: '2.5rem', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif' }}>{briefs.length}</div>
+                        </div>
+                        <div style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '1.5rem' }}>
+                            <div style={{ color: 'var(--text-sec)', fontSize: '0.8rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Watchlist</div>
+                            <div style={{ color: '#C8FF00', fontSize: '2.5rem', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif' }}>{watchlist.length}</div>
+                        </div>
+                        <div style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                            <div style={{ color: 'var(--text-sec)', fontSize: '0.8rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Last Brief Generated</div>
+                            <div style={{ color: '#C8FF00', fontSize: '1.5rem', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif', marginTop: 'auto', lineHeight: '1.2' }}>
+                                {briefs.length > 0 ? formatLastBriefed(briefs[0].created_at) : 'None yet'}
+                            </div>
+                        </div>
+                    </div>
+
+                    <h2 style={{ fontSize: '1.25rem', fontWeight: '700', marginBottom: '1.25rem', letterSpacing: '-0.3px' }}>Recent Briefs</h2>
+                    <div id="briefs-list" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1.5rem', paddingBottom: isMobile ? '60px' : '0' }}>
                         {loading ? (
                             Array.from({ length: 4 }).map((_, i) => <BriefCardSkeleton key={i} />)
                         ) : filteredBriefs.length === 0 ? (
-                            <div style={{ gridColumn: '1/-1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '4rem 0', textAlign: 'center', gap: '1rem' }}>
-                                <p style={{ color: 'var(--text-sec)' }}>No briefs yet. Generate your first brief to get started.</p>
+                            <div style={{ gridColumn: '1/-1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '6rem 1rem', textAlign: 'center', gap: '1.5rem', background: '#111111', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                                <div style={{ background: 'rgba(200,255,0,0.1)', padding: '1.25rem', borderRadius: '50%' }}>
+                                    <Zap size={40} color="#C8FF00" />
+                                </div>
+                                <div>
+                                    <h3 style={{ color: 'var(--text)', fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>No briefs yet</h3>
+                                    <p style={{ color: 'var(--text-sec)' }}>Generate your first brief to see it here. Takes under 60 seconds.</p>
+                                </div>
                                 <button onClick={() => navigate('/brief/new')}
-                                    style={{ padding: '0.5rem 1.25rem', borderRadius: '8px', background: 'var(--accent)', color: '#000', fontWeight: '600', fontSize: '0.875rem', border: 'none', cursor: 'pointer' }}>
+                                    style={{ padding: '0.75rem 1.5rem', borderRadius: '8px', background: 'var(--accent)', color: '#000', fontWeight: '700', fontSize: '0.875rem', border: 'none', cursor: 'pointer', fontFamily: 'Space Grotesk, sans-serif' }}>
                                     + Generate Brief
                                 </button>
                             </div>
@@ -340,30 +386,53 @@ export default function DashboardPage() {
                             filteredBriefs.map((brief) => {
                             const parsed = brief.brief || null
                             const rawSnippet = parsed?.summary?.content || parsed?.news?.content || Object.values(parsed || {}).find(s => s?.content)?.content || null
-                            const snippet = rawSnippet ? (rawSnippet.length > 120 ? rawSnippet.slice(0, 120) + '...' : rawSnippet) : 'No preview available.'
+                            const snippet = rawSnippet ? (rawSnippet.length > 150 ? rawSnippet.slice(0, 150) + '...' : rawSnippet) : 'No preview available.'
+                            const sections = (Array.isArray(brief.sections_requested) ? brief.sections_requested : (brief.sections_requested || '').split(',')).filter(Boolean).map(s => s.trim())
+                            
                             return (
                                 <div key={brief.id} onClick={() => navigate(`/brief/${brief.id}`)}
-                                    style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '1.25rem', cursor: 'pointer', transition: 'border-color 0.15s' }}
-                                    onMouseEnter={(e) => e.currentTarget.style.borderColor = '#333333'}
-                                    onMouseLeave={(e) => e.currentTarget.style.borderColor = 'var(--border)'}>
+                                    style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '1.5rem', cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column', minHeight: '260px' }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#C8FF00'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.transform = 'translateY(0)' }}>
+                                    
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-                                        <h3 style={{ fontWeight: '700', fontSize: '0.95rem', letterSpacing: '-0.3px' }}>{brief.company_name}</h3>
-                                        {brief.saved && (
-                                            <Bookmark size={14} style={{ color: 'var(--accent)', flexShrink: 0 }} fill="var(--accent)" />
-                                        )}
+                                        <h3 style={{ fontWeight: '700', fontSize: '1.25rem', letterSpacing: '-0.3px', color: 'var(--text)', flex: 1, paddingRight: '1rem' }}>{brief.company_name}</h3>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexShrink: 0 }}>
+                                            {brief.saved && (
+                                                <Bookmark size={16} style={{ color: 'var(--accent)' }} fill="var(--accent)" />
+                                            )}
+                                            <button onClick={(e) => deleteBrief(e, brief.id)}
+                                                style={{ background: 'none', border: 'none', color: 'var(--text-sec)', cursor: 'pointer', padding: '0.2rem', transition: 'color 0.2s' }}
+                                                onMouseEnter={(e) => e.currentTarget.style.color = '#FF4444'}
+                                                onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-sec)'}>
+                                                <X size={16} />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-1.5rem', marginBottom: '0.5rem', position: 'relative', zIndex: 10 }}>
-                                        <button onClick={(e) => deleteBrief(e, brief.id)}
-                                            style={{ background: 'none', border: 'none', color: 'var(--text-sec)', cursor: 'pointer', padding: '0.2rem', marginLeft: '0.5rem' }}>
-                                            <X size={14} />
-                                        </button>
-                                    </div>
-                                    <p style={{ color: 'var(--text-sec)', fontSize: '0.8rem', lineHeight: '1.5', marginBottom: '1rem', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                    
+                                    <p style={{ color: 'var(--text-sec)', fontSize: '0.9rem', lineHeight: '1.6', flex: 1, marginBottom: '1.25rem', position: 'relative' }}>
                                         {snippet}
+                                        <span style={{ position: 'absolute', bottom: 0, right: 0, width: '100%', height: '2rem', background: 'linear-gradient(transparent, #111111)' }} />
                                     </p>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <span style={{ fontSize: '0.7rem', color: '#444444' }}>{formatDate(brief.created_at)}</span>
-                                        <span style={{ fontSize: '0.7rem', color: 'var(--text-sec)', textTransform: 'capitalize', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '3px', padding: '0.15rem 0.4rem' }}>{brief.length}</span>
+                                    
+                                    {sections.length > 0 && (
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginBottom: '1.25rem' }}>
+                                            {sections.map(sec => (
+                                                <span key={sec} style={{ fontSize: '0.7rem', color: '#888', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '100px', padding: '0.2rem 0.6rem', textTransform: 'capitalize' }}>
+                                                    {sec}
+                                                </span>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem', marginTop: 'auto' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#666' }}>
+                                            <Clock size={12} />
+                                            <span style={{ fontSize: '0.75rem' }}>{formatDate(brief.created_at)}</span>
+                                        </div>
+                                        <span style={{ fontSize: '0.75rem', color: '#000', fontWeight: '600', textTransform: 'capitalize', background: 'var(--accent)', borderRadius: '4px', padding: '0.2rem 0.5rem' }}>
+                                            {brief.length}
+                                        </span>
                                     </div>
                                 </div>
                             )
