@@ -93,7 +93,12 @@ export default function AuthPage() {
                 </div>
 
                 <div style={{ marginBottom: '1.5rem' }}>
-                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-sec)', marginBottom: '0.4rem', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Password</label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+                        <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-sec)', letterSpacing: '0.05em', textTransform: 'uppercase' }}>Password</label>
+                        {mode === 'login' && (
+                            <span onClick={() => navigate('/forgot-password')} style={{ fontSize: '0.75rem', color: 'var(--text-sec)', cursor: 'pointer', textDecoration: 'underline' }}>Forgot password?</span>
+                        )}
+                    </div>
                     <input
                         type="password" value={password} onChange={(e) => setPassword(e.target.value)}
                         onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}

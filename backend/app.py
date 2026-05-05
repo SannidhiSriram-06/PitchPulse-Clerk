@@ -4,7 +4,7 @@ import secrets
 import re
 from datetime import datetime, UTC, timedelta
 
-from flask import Flask, request, jsonify, g
+from flask import Flask, request, jsonify, g, current_app
 from flask_cors import CORS
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
@@ -212,6 +212,89 @@ def _register_routes(app):
         g.current_user.password_hash = hash_password(new_pw)
         db.session.commit()
         return jsonify({"message": "Password updated successfully."}), 200
+
+    # ── Auth: Forgot Password ──────────────────────────────────────────────────
+
+    @app.route("/api/auth/forgot-password", methods=["POST"])
+    @limiter.limit("5 per minute", error_message="Too many attempts.")
+    def forgot_password():
+        from models import User
+        import resend
+        
+        data = request.get_json(silent=True) or {}
+        email_raw = data.get("email", "")
+        valid, err = validate_email(email_raw)
+        if not valid:
+            return jsonify({"error": err}), 400
+        email = email_raw.strip().lower()
+
+        user = User.query.filter_by(email=email).first()
+        success_message = "If that email exists, a reset link has been sent."
+        
+        if user:
+            token = secrets.token_urlsafe(32)
+            user.reset_token = token
+            user.reset_token_expiry = datetime.now(UTC) + timedelta(hours=1)
+            db.session.commit()
+            
+            try:
+                resend.api_key = current_app.config["RESEND_API_KEY"]
+                frontend_url = current_app.config.get("FRONTEND_URL", "http://localhost:5173")
+                reset_link = f"{frontend_url}/reset-password?token={token}"
+                resend.Emails.send({
+                    "from": "onboarding@resend.dev",
+                    "to": user.email,
+                    "subject": "Reset your PitchPulse password",
+                    "html": f"""
+                        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto; padding: 32px;">
+                          <h2 style="color: #0a0a0a;">Reset your password</h2>
+                          <p>Click the button below to reset your PitchPulse password. This link expires in 1 hour.</p>
+                          <a href="{reset_link}" style="display: inline-block; background: #C8FF00; color: #0a0a0a; font-weight: bold; padding: 12px 24px; border-radius: 6px; text-decoration: none; margin: 16px 0;">Reset Password</a>
+                          <p style="color: #666; font-size: 14px;">If you didn't request this, ignore this email. Your password won't change.</p>
+                          <p style="color: #666; font-size: 14px;">Or copy this link: {reset_link}</p>
+                        </div>
+                    """
+                })
+            except Exception as e:
+                print(f"Failed to send reset email: {e}")
+                
+        return jsonify({"message": success_message}), 200
+
+    # ── Auth: Reset Password ──────────────────────────────────────────────────
+
+    @app.route("/api/auth/reset-password", methods=["POST"])
+    @limiter.limit("5 per minute", error_message="Too many attempts.")
+    def reset_password():
+        from models import User
+        
+        data = request.get_json(silent=True) or {}
+        token = data.get("token")
+        new_password = data.get("new_password")
+        
+        if not token or not new_password:
+            return jsonify({"error": "Token and new password are required."}), 400
+            
+        user = User.query.filter_by(reset_token=token).first()
+        if not user:
+            return jsonify({"error": "Invalid or expired reset link."}), 400
+            
+        expiry = user.reset_token_expiry
+        if expiry and expiry.tzinfo is None:
+            expiry = expiry.replace(tzinfo=UTC)
+            
+        if not expiry or expiry < datetime.now(UTC):
+            return jsonify({"error": "Reset link has expired. Please request a new one."}), 400
+            
+        valid, err = validate_password(new_password)
+        if not valid:
+            return jsonify({"error": err}), 400
+            
+        user.password_hash = hash_password(new_password)
+        user.reset_token = None
+        user.reset_token_expiry = None
+        db.session.commit()
+        
+        return jsonify({"message": "Password reset successfully. You can now log in."}), 200
 
     # ── Auth: Delete Account ──────────────────────────────────────────────────
 

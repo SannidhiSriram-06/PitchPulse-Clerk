@@ -8,6 +8,8 @@ import BriefGeneratorPage from './pages/BriefGeneratorPage'
 import BriefDisplayPage from './pages/BriefDisplayPage'
 import HistoryPage from './pages/HistoryPage'
 import SettingsPage from './pages/SettingsPage'
+import ForgotPasswordPage from './pages/ForgotPasswordPage'
+import ResetPasswordPage from './pages/ResetPasswordPage'
 import PWAInstallBanner from './components/PWAInstallBanner'
 
 export default function App() {
@@ -17,6 +19,8 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
         <Route path="/login" element={<AuthPage />} />
         <Route path="/register" element={<AuthPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="/onboarding" element={<ProtectedRoute><OnboardingPage /></ProtectedRoute>} />
         <Route path="/dashboard" element={<ProtectedRoute><DashboardPage /></ProtectedRoute>} />
         <Route path="/brief/new" element={<ProtectedRoute><BriefGeneratorPage /></ProtectedRoute>} />

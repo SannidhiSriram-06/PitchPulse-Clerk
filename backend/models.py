@@ -9,6 +9,8 @@ class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)        # NEW — bcrypt hash
+    reset_token = db.Column(db.String(128), nullable=True, default=None)
+    reset_token_expiry = db.Column(db.DateTime, nullable=True, default=None)
     tier = db.Column(db.String(50), default="free", nullable=False)
     briefs_used_this_hour = db.Column(db.Integer, default=0, nullable=False)
     hour_window_start = db.Column(db.DateTime(timezone=True), nullable=True)

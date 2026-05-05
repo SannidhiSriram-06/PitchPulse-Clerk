@@ -22,6 +22,10 @@ class Config:
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
     TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
 
+    # Resend
+    RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
+    FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
+
     # Rate limiting (free tier)
     FREE_TIER_HOURLY_LIMIT = 3
 
