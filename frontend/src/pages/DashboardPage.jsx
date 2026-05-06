@@ -25,6 +25,10 @@ export default function DashboardPage() {
     const [sidebarOpen, setSidebarOpen] = useState(showWatchlist ?? true)
     const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false)
     const [showCustomize, setShowCustomize] = useState(false)
+    const [alerts, setAlerts] = useState({})
+    const [openNote, setOpenNote] = useState(null)
+    const [noteTexts, setNoteTexts] = useState({})
+    const [noteSaved, setNoteSaved] = useState({})
 
 
 
@@ -41,8 +45,27 @@ export default function DashboardPage() {
                 api.get('/api/briefs'),
                 api.get('/api/watchlist')
             ])
+            const watchlistData = watchlistRes.data.watchlist || []
             setBriefs(briefsRes.data.briefs || [])
-            setWatchlist(watchlistRes.data.watchlist || [])
+            setWatchlist(watchlistData)
+
+            try {
+                const alertRes = await api.get('/api/watchlist/alerts')
+                const alertMap = {}
+                ;(alertRes.data.alerts || []).forEach((a) => {
+                    alertMap[a.company_name] = a
+                })
+                setAlerts(alertMap)
+            } catch (e) { /* silent fail */ }
+
+            for (const entry of watchlistData) {
+                try {
+                    const r = await api.get(`/api/watchlist/notes/${encodeURIComponent(entry.company_name)}`)
+                    if (r.data.note_text) {
+                        setNoteTexts((prev) => ({ ...prev, [entry.company_name]: r.data.note_text }))
+                    }
+                } catch (e) { /* silent fail */ }
+            }
 
             try {
                 const prefsRes = await api.get('/api/user/preferences')
@@ -211,40 +234,81 @@ export default function DashboardPage() {
                             <p style={{ color: '#444444', fontSize: '0.8rem', marginBottom: '1rem' }}>No companies pinned yet. Add a company below to get started.</p>
                         ) : (
                             watchlist.map((item) => (
-                            <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: sidebarOpen ? 'space-between' : 'center', padding: '0.75rem 0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', gap: '0.5rem', borderRadius: '6px', transition: 'background 0.2s', margin: '0 -0.5rem' }}
-                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
-                                onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                                {sidebarOpen && (
-                                    <div style={{ flex: 1, overflow: 'hidden' }}>
-                                        <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '0.2rem' }}>{item.company_name}</div>
-                                        <div style={{ fontSize: '0.7rem', color: item.last_briefed_at ? '#666' : '#444' }}>
-                                            {item.last_briefed_at ? `Last briefed ${formatLastBriefed(item.last_briefed_at)}` : 'Never briefed'}
+                                <div key={item.id}>
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: sidebarOpen ? 'space-between' : 'center', padding: '0.75rem 0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', gap: '0.5rem', borderRadius: '6px', transition: 'background 0.2s', margin: '0 -0.5rem' }}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+                                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                                        {sidebarOpen && (
+                                            <div style={{ flex: 1, overflow: 'hidden' }}>
+                                                <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '0.2rem', display: 'flex', alignItems: 'center' }}>
+                                                    {item.company_name}
+                                                    {alerts[item.company_name]?.has_recent_news && (
+                                                        <span
+                                                            style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', display: 'inline-block', marginLeft: 6 }}
+                                                            title={alerts[item.company_name]?.headline || 'Recent news available'}
+                                                        />
+                                                    )}
+                                                </div>
+                                                <div style={{ fontSize: '0.7rem', color: item.last_briefed_at ? '#666' : '#444' }}>
+                                                    {item.last_briefed_at ? `Last briefed ${formatLastBriefed(item.last_briefed_at)}` : 'Never briefed'}
+                                                </div>
+                                            </div>
+                                        )}
+                                        <div style={{ display: 'flex', flexDirection: sidebarOpen ? 'row' : 'column', gap: '0.4rem', flexShrink: 0, alignItems: 'center' }}>
+                                            <button onClick={() => navigate(`/brief/new?company=${encodeURIComponent(item.company_name)}`)}
+                                                style={{ background: 'rgba(200,255,0,0.1)', border: '1px solid rgba(200,255,0,0.2)', borderRadius: '4px', padding: '0.3rem 0.5rem', color: 'var(--accent)', cursor: 'pointer', transition: 'background 0.2s' }}
+                                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(200,255,0,0.2)'}
+                                                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(200,255,0,0.1)'}
+                                                title="Brief Me">
+                                                <Zap size={12} />
+                                            </button>
+                                            <button
+                                                onClick={() => setOpenNote(openNote === item.company_name ? null : item.company_name)}
+                                                style={{ background: 'none', border: '1px solid #333', borderRadius: '4px', padding: '0.3rem 0.5rem', color: (noteTexts[item.company_name] || '').trim() ? '#C8FF00' : '#666', cursor: 'pointer', transition: 'color 0.2s' }}
+                                                title="Notes"
+                                            >
+                                                📝
+                                            </button>
+                                            {!sidebarOpen && (
+                                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isWithin7Days(item.last_briefed_at) ? '#C8FF00' : '#444444', marginTop: '4px' }} />
+                                            )}
+                                            {sidebarOpen && (
+                                                <button onClick={() => removeFromWatchlist(item.id)}
+                                                    style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: '0.3rem', transition: 'color 0.2s' }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.color = '#FF4444'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.color = '#555'}
+                                                    title="Remove">
+                                                    <X size={14} />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
-                                )}
-                                <div style={{ display: 'flex', flexDirection: sidebarOpen ? 'row' : 'column', gap: '0.4rem', flexShrink: 0, alignItems: 'center' }}>
-                                    <button onClick={() => navigate(`/brief/new?company=${encodeURIComponent(item.company_name)}`)}
-                                        style={{ background: 'rgba(200,255,0,0.1)', border: '1px solid rgba(200,255,0,0.2)', borderRadius: '4px', padding: '0.3rem 0.5rem', color: 'var(--accent)', cursor: 'pointer', transition: 'background 0.2s' }}
-                                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(200,255,0,0.2)'}
-                                        onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(200,255,0,0.1)'}
-                                        title="Brief Me">
-                                        <Zap size={12} />
-                                    </button>
-                                    {!sidebarOpen && (
-                                        <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isWithin7Days(item.last_briefed_at) ? '#C8FF00' : '#444444', marginTop: '4px' }} />
-                                    )}
-                                    {sidebarOpen && (
-                                    <button onClick={() => removeFromWatchlist(item.id)}
-                                        style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: '0.3rem', transition: 'color 0.2s' }}
-                                        onMouseEnter={(e) => e.currentTarget.style.color = '#FF4444'}
-                                        onMouseLeave={(e) => e.currentTarget.style.color = '#555'}
-                                        title="Remove">
-                                        <X size={14} />
-                                    </button>
+                                    {openNote === item.company_name && (
+                                        <div style={{ marginTop: 4, marginBottom: 8 }}>
+                                            <textarea
+                                                value={noteTexts[item.company_name] || ''}
+                                                onChange={(e) => setNoteTexts((prev) => ({ ...prev, [item.company_name]: e.target.value }))}
+                                                onBlur={async () => {
+                                                    try {
+                                                        await api.post(`/api/watchlist/notes/${encodeURIComponent(item.company_name)}`, {
+                                                            note_text: noteTexts[item.company_name] || '',
+                                                        })
+                                                        setNoteSaved((prev) => ({ ...prev, [item.company_name]: true }))
+                                                        setTimeout(() => {
+                                                            setNoteSaved((prev) => ({ ...prev, [item.company_name]: false }))
+                                                        }, 2000)
+                                                    } catch (e) { /* silent fail */ }
+                                                }}
+                                                placeholder="Add private notes about this company..."
+                                                rows={3}
+                                                style={{ width: '100%', background: '#1a1a1a', border: '1px solid #333', borderRadius: 4, color: 'var(--text)', fontSize: '0.75rem', padding: '6px 8px', marginTop: 4, resize: 'vertical' }}
+                                            />
+                                            {noteSaved[item.company_name] && <span style={{ fontSize: '0.7rem', color: '#C8FF00' }}>Saved ✓</span>}
+                                        </div>
                                     )}
                                 </div>
-                            </div>
-                        )))}
+                            ))
+                        )}
 
                         <div style={{ display: 'flex', gap: '0.4rem', marginTop: '1rem', justifyContent: sidebarOpen ? 'flex-start' : 'center' }}>
                             {sidebarOpen ? (
@@ -289,33 +353,74 @@ export default function DashboardPage() {
                                 <p style={{ color: '#444444', fontSize: '0.8rem', marginBottom: '1rem' }}>No companies pinned yet. Add a company below to get started.</p>
                             ) : (
                                 watchlist.map((item) => (
-                                <div key={item.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', gap: '0.5rem', borderRadius: '6px', transition: 'background 0.2s', margin: '0 -0.5rem' }}
-                                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
-                                    onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                                    <div style={{ flex: 1, overflow: 'hidden' }}>
-                                        <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '0.2rem' }}>{item.company_name}</div>
-                                        <div style={{ fontSize: '0.7rem', color: item.last_briefed_at ? '#666' : '#444' }}>
-                                            {item.last_briefed_at ? `Last briefed ${formatLastBriefed(item.last_briefed_at)}` : 'Never briefed'}
+                                    <div key={item.id}>
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.75rem 0.5rem', borderBottom: '1px solid rgba(255,255,255,0.05)', gap: '0.5rem', borderRadius: '6px', transition: 'background 0.2s', margin: '0 -0.5rem' }}
+                                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.03)'}
+                                            onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
+                                            <div style={{ flex: 1, overflow: 'hidden' }}>
+                                                <div style={{ fontSize: '0.85rem', fontWeight: '600', color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginBottom: '0.2rem', display: 'flex', alignItems: 'center' }}>
+                                                    {item.company_name}
+                                                    {alerts[item.company_name]?.has_recent_news && (
+                                                        <span
+                                                            style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444', display: 'inline-block', marginLeft: 6 }}
+                                                            title={alerts[item.company_name]?.headline || 'Recent news available'}
+                                                        />
+                                                    )}
+                                                </div>
+                                                <div style={{ fontSize: '0.7rem', color: item.last_briefed_at ? '#666' : '#444' }}>
+                                                    {item.last_briefed_at ? `Last briefed ${formatLastBriefed(item.last_briefed_at)}` : 'Never briefed'}
+                                                </div>
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
+                                                <button onClick={() => { setMobileDrawerOpen(false); navigate(`/brief/new?company=${encodeURIComponent(item.company_name)}`) }}
+                                                    style={{ background: 'rgba(200,255,0,0.1)', border: '1px solid rgba(200,255,0,0.2)', borderRadius: '4px', padding: '0.3rem 0.5rem', color: 'var(--accent)', cursor: 'pointer', transition: 'background 0.2s' }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(200,255,0,0.2)'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(200,255,0,0.1)'}
+                                                    title="Brief Me">
+                                                    <Zap size={12} />
+                                                </button>
+                                                <button
+                                                    onClick={() => setOpenNote(openNote === item.company_name ? null : item.company_name)}
+                                                    style={{ background: 'none', border: '1px solid #333', borderRadius: '4px', padding: '0.3rem 0.5rem', color: (noteTexts[item.company_name] || '').trim() ? '#C8FF00' : '#666', cursor: 'pointer', transition: 'color 0.2s' }}
+                                                    title="Notes"
+                                                >
+                                                    📝
+                                                </button>
+                                                <button onClick={() => removeFromWatchlist(item.id)}
+                                                    style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: '0.3rem', transition: 'color 0.2s' }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.color = '#FF4444'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.color = '#555'}
+                                                    title="Remove">
+                                                    <X size={14} />
+                                                </button>
+                                            </div>
                                         </div>
+                                        {openNote === item.company_name && (
+                                            <div style={{ marginTop: 4, marginBottom: 8 }}>
+                                                <textarea
+                                                    value={noteTexts[item.company_name] || ''}
+                                                    onChange={(e) => setNoteTexts((prev) => ({ ...prev, [item.company_name]: e.target.value }))}
+                                                    onBlur={async () => {
+                                                        try {
+                                                            await api.post(`/api/watchlist/notes/${encodeURIComponent(item.company_name)}`, {
+                                                                note_text: noteTexts[item.company_name] || '',
+                                                            })
+                                                            setNoteSaved((prev) => ({ ...prev, [item.company_name]: true }))
+                                                            setTimeout(() => {
+                                                                setNoteSaved((prev) => ({ ...prev, [item.company_name]: false }))
+                                                            }, 2000)
+                                                        } catch (e) { /* silent fail */ }
+                                                    }}
+                                                    placeholder="Add private notes about this company..."
+                                                    rows={3}
+                                                    style={{ width: '100%', background: '#1a1a1a', border: '1px solid #333', borderRadius: 4, color: 'var(--text)', fontSize: '0.75rem', padding: '6px 8px', marginTop: 4, resize: 'vertical' }}
+                                                />
+                                                {noteSaved[item.company_name] && <span style={{ fontSize: '0.7rem', color: '#C8FF00' }}>Saved ✓</span>}
+                                            </div>
+                                        )}
                                     </div>
-                                    <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
-                                        <button onClick={() => { setMobileDrawerOpen(false); navigate(`/brief/new?company=${encodeURIComponent(item.company_name)}`) }}
-                                            style={{ background: 'rgba(200,255,0,0.1)', border: '1px solid rgba(200,255,0,0.2)', borderRadius: '4px', padding: '0.3rem 0.5rem', color: 'var(--accent)', cursor: 'pointer', transition: 'background 0.2s' }}
-                                            onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(200,255,0,0.2)'}
-                                            onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(200,255,0,0.1)'}
-                                            title="Brief Me">
-                                            <Zap size={12} />
-                                        </button>
-                                        <button onClick={() => removeFromWatchlist(item.id)}
-                                            style={{ background: 'none', border: 'none', color: '#555', cursor: 'pointer', padding: '0.3rem', transition: 'color 0.2s' }}
-                                            onMouseEnter={(e) => e.currentTarget.style.color = '#FF4444'}
-                                            onMouseLeave={(e) => e.currentTarget.style.color = '#555'}
-                                            title="Remove">
-                                            <X size={14} />
-                                        </button>
-                                    </div>
-                                </div>
-                            )))}
+                                ))
+                            )}
 
                             <div style={{ display: 'flex', gap: '0.4rem', marginTop: '1rem' }}>
                                 <input value={newCompany} onChange={(e) => setNewCompany(e.target.value)}

@@ -73,7 +73,10 @@ def _check_and_increment_rate_limit(user):
 
     if user.briefs_used_this_hour >= FREE_TIER_LIMIT:
         remaining = 0
-        reset_in_minutes = max(1, int((user.hour_window_start + timedelta(hours=1) - now).total_seconds() / 60))
+        window_start = user.hour_window_start
+        if window_start.tzinfo is None:
+            window_start = window_start.replace(tzinfo=UTC)
+        reset_in_minutes = max(1, int((window_start + timedelta(hours=1) - now).total_seconds() / 60))
         return False, remaining, reset_in_minutes
 
     user.briefs_used_this_hour += 1
@@ -377,8 +380,20 @@ def _register_routes(app):
         if not isinstance(requested_sections, list):
             return jsonify({"error": "sections must be a list of strings."}), 400
         requested_sections = [s for s in requested_sections if s in valid_sections]
+
+        custom_prompt = data.get("custom_prompt", "").strip()
+        print(f"[DEBUG] custom_prompt received: '{custom_prompt}'", flush=True)
+        print(f"[DEBUG] requested_sections: {requested_sections}", flush=True)
+        if len(custom_prompt) > 500:
+            return jsonify({"error": "custom_prompt must be 500 characters or fewer."}), 400
+
+        if custom_prompt and "custom_focus" not in requested_sections:
+            requested_sections.append("custom_focus")
+
         if not requested_sections:
             return jsonify({"error": "No valid sections provided. Valid options: summary, news, financials, social_sentiment, talking_points, watch_out_for"}), 400
+
+
 
         # Validate env vars before running agents
         try:
@@ -390,7 +405,7 @@ def _register_routes(app):
         import time
         start = time.time()
         try:
-            result = run_brief(company_name, length, requested_sections)
+            result = run_brief(company_name, length, requested_sections, custom_prompt)
         except Exception as e:
             return jsonify({"error": "Agent execution failed. Please try again.", "detail": str(e)}), 500
         elapsed_ms = int((time.time() - start) * 1000)
@@ -605,6 +620,70 @@ def _register_routes(app):
         entries = Watchlist.query.filter_by(user_id=g.current_user.id)\
             .order_by(Watchlist.added_at.desc()).all()
         return jsonify({"watchlist": [e.to_dict() for e in entries]}), 200
+
+    @app.route("/api/watchlist/alerts", methods=["GET"])
+    @require_auth
+    def get_watchlist_alerts():
+        from models import Watchlist
+        from tools import company_web_search
+
+        entries = Watchlist.query.filter_by(user_id=g.current_user.id).limit(5).all()
+        alerts = []
+        for entry in entries:
+            try:
+                results = company_web_search(entry.company_name)
+                res_list = results.get("results", []) if isinstance(results, dict) else []
+                has_recent = any("2025" in str(r) or "2026" in str(r) for r in res_list)
+                headline = res_list[0].get("title", "")[:80] if res_list and isinstance(res_list[0], dict) else ""
+                alerts.append({
+                    "company_name": entry.company_name,
+                    "has_recent_news": bool(has_recent),
+                    "headline": headline,
+                })
+            except Exception:
+                alerts.append({
+                    "company_name": entry.company_name,
+                    "has_recent_news": False,
+                    "headline": "",
+                })
+        return jsonify({"alerts": alerts}), 200
+
+    @app.route("/api/watchlist/notes/<company_name>", methods=["GET"])
+    @require_auth
+    def get_watchlist_note(company_name):
+        from models import WatchlistNote
+
+        note = WatchlistNote.query.filter_by(
+            user_id=g.current_user.id,
+            company_name=company_name,
+        ).first()
+        return jsonify({"note_text": note.note_text if note else ""}), 200
+
+    @app.route("/api/watchlist/notes/<company_name>", methods=["POST"])
+    @require_auth
+    def save_watchlist_note(company_name):
+        from models import WatchlistNote
+
+        data = request.get_json(silent=True) or {}
+        note_text = data.get("note_text", "")[:1000]
+        note = WatchlistNote.query.filter_by(
+            user_id=g.current_user.id,
+            company_name=company_name,
+        ).first()
+
+        if note:
+            note.note_text = note_text
+            note.updated_at = datetime.now(UTC)
+        else:
+            note = WatchlistNote(
+                user_id=g.current_user.id,
+                company_name=company_name,
+                note_text=note_text,
+            )
+            db.session.add(note)
+
+        db.session.commit()
+        return jsonify({"message": "Saved"}), 200
 
     # ── Watchlist: Add ────────────────────────────────────────────────────────
 

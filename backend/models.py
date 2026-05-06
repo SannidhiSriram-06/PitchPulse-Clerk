@@ -95,3 +95,18 @@ class Watchlist(db.Model):
             "added_at": self.added_at.isoformat() if self.added_at else None,
             "last_briefed_at": self.last_briefed_at.isoformat() if self.last_briefed_at else None,
         }
+
+
+class WatchlistNote(db.Model):
+    __tablename__ = "watchlist_notes"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
+    company_name = db.Column(db.String(100), nullable=False)
+    note_text = db.Column(db.Text, nullable=True, default="")
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(UTC))
+
+    __table_args__ = (
+        db.UniqueConstraint("user_id", "company_name", name="uq_user_company_note"),
+    )
