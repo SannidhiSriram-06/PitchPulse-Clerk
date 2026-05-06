@@ -382,8 +382,6 @@ def _register_routes(app):
         requested_sections = [s for s in requested_sections if s in valid_sections]
 
         custom_prompt = data.get("custom_prompt", "").strip()
-        print(f"[DEBUG] custom_prompt received: '{custom_prompt}'", flush=True)
-        print(f"[DEBUG] requested_sections: {requested_sections}", flush=True)
         if len(custom_prompt) > 500:
             return jsonify({"error": "custom_prompt must be 500 characters or fewer."}), 400
 
@@ -684,30 +682,6 @@ def _register_routes(app):
 
         db.session.commit()
         return jsonify({"message": "Saved"}), 200
-
-    @app.route("/api/admin/migrate-watchlist-notes", methods=["POST"])
-    def migrate_watchlist_notes():
-        secret = request.headers.get("X-Migration-Secret", "")
-        if secret != "pitchpulse-migrate-2026":
-            return jsonify({"error": "Unauthorized"}), 401
-        try:
-            from sqlalchemy import text
-            with db.engine.connect() as conn:
-                conn.execute(text('''
-                    CREATE TABLE IF NOT EXISTS watchlist_notes (
-                        id SERIAL PRIMARY KEY,
-                        user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                        company_name VARCHAR(100) NOT NULL,
-                        note_text TEXT DEFAULT '',
-                        created_at TIMESTAMP,
-                        updated_at TIMESTAMP,
-                        CONSTRAINT uq_user_company_note UNIQUE (user_id, company_name)
-                    )
-                '''))
-                conn.commit()
-            return jsonify({"message": "Migration successful"}), 200
-        except Exception as e:
-            return jsonify({"error": str(e)}), 500
 
     # ── Watchlist: Add ────────────────────────────────────────────────────────
 
