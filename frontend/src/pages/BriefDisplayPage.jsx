@@ -15,6 +15,7 @@ const SECTION_LABELS = {
     social_sentiment: 'Social Sentiment',
     talking_points: 'Talking Points',
     watch_out_for: 'Watch Out For',
+    custom_focus: 'Custom Focus',
 }
 
 const CONFIDENCE_COLORS = {
@@ -113,13 +114,14 @@ export default function BriefDisplayPage() {
 
     const formatDate = (iso) => {
         if (!iso) return ''
-        return new Date(iso).toLocaleString('en-US', {
-            month: 'short', day: 'numeric', year: 'numeric',
-            hour: '2-digit', minute: '2-digit'
-        })
+        return new Date(iso.endsWith('Z') ? iso : iso + 'Z').toLocaleString(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
     }
 
-    const sections = brief ? Object.keys(brief) : []
+    const sections = brief ? Object.keys(brief).sort((a, b) => {
+        if (a === 'custom_focus') return 1
+        if (b === 'custom_focus') return -1
+        return 0
+    }) : []
     const sources = briefMeta?.sources_used || []
 
     if (loading) return (

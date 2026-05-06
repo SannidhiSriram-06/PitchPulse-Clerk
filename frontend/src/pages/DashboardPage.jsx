@@ -89,13 +89,13 @@ export default function DashboardPage() {
     )
 
     const formatDate = (iso) => {
-        const d = new Date(iso)
-        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+        if (!iso) return ''
+        return new Date(iso.endsWith('Z') ? iso : iso + 'Z').toLocaleString(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
     }
 
     const formatLastBriefed = (isoString) => {
         if (!isoString) return null
-        const date = new Date(isoString)
+        const date = new Date(isoString.endsWith('Z') ? isoString : isoString + 'Z')
         const diffMs = new Date() - date
         const diffMins = Math.floor(diffMs / 60000)
         
@@ -113,7 +113,7 @@ export default function DashboardPage() {
 
     const isWithin7Days = (isoString) => {
         if (!isoString) return false
-        return (new Date() - new Date(isoString)) / (1000 * 60 * 60 * 24) <= 7
+        return (new Date() - new Date(isoString.endsWith('Z') ? isoString : isoString + 'Z')) / (1000 * 60 * 60 * 24) <= 7
     }
 
     const isMobile = useIsMobile()
