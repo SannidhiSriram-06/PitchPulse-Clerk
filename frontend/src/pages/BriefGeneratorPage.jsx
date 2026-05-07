@@ -34,6 +34,7 @@ export default function BriefGeneratorPage() {
     const [company, setCompany] = useState(searchParams.get('company') || '')
     const [length, setLength] = useState(defaultLength || 'medium')
     const [sections, setSections] = useState(ALL_SECTIONS.map((s) => s.key))
+    const [customPrompt, setCustomPrompt] = useState('')
     const [error, setError] = useState('')
     const [rateLimitData, setRateLimitData] = useState(null)
     const statusInterval = useRef(null)
@@ -60,7 +61,7 @@ export default function BriefGeneratorPage() {
         setError('')
         startStatusCycle(company.trim())
         try {
-            const result = await generateBrief(company.trim(), length, sections)
+            const result = await generateBrief(company.trim(), length, sections, customPrompt.trim())
             clearInterval(statusInterval.current)
             navigate(`/brief/${result.brief_id}`)
         } catch (err) {
@@ -153,6 +154,25 @@ export default function BriefGeneratorPage() {
                                 </button>
                             )
                         })}
+                    </div>
+                </div>
+
+                {/* Custom Prompt */}
+                <div style={{ marginBottom: '2.5rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.6rem' }}>Custom Focus (optional)</label>
+                    <textarea
+                        value={customPrompt} onChange={(e) => setCustomPrompt(e.target.value)}
+                        placeholder="e.g. Focus on their AI strategy and recent layoffs, or Ask about their cloud migration plans"
+                        maxLength={500}
+                        style={{ width: '100%', minHeight: '80px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', padding: '1rem', color: 'var(--text)', fontSize: '1rem', fontFamily: 'Space Grotesk, sans-serif', outline: 'none', boxSizing: 'border-box', letterSpacing: '-0.3px', resize: 'vertical' }}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.4rem' }}>
+                        <p style={{ color: 'var(--text-sec)', fontSize: '0.75rem', margin: 0 }}>
+                            Add any specific angle or question you want the brief to address.
+                        </p>
+                        <p style={{ color: 'var(--text-sec)', fontSize: '0.75rem', margin: 0 }}>
+                            {customPrompt.length}/500
+                        </p>
                     </div>
                 </div>
 

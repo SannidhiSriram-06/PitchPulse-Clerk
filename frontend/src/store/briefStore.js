@@ -7,10 +7,10 @@ const useBriefStore = create((set) => ({
     generating: false,
     statusMessage: '',
 
-    generateBrief: async (companyName, length, sections) => {
+    generateBrief: async (companyName, length, sections, customPrompt = '') => {
         set({ generating: true, statusMessage: `Searching for recent news on ${companyName}...` })
         try {
-            const res = await api.post('/api/brief', { company_name: companyName, length, sections })
+            const res = await api.post('/api/brief', { company_name: companyName, length, sections, custom_prompt: customPrompt })
             set({ currentBrief: res.data, generating: false, statusMessage: '' })
             return res.data
         } catch (err) {

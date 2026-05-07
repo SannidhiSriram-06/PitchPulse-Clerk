@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Bookmark, BookmarkCheck, Share2, RefreshCw, ThumbsUp, ThumbsDown, ChevronDown, ChevronUp, Sun, Moon } from 'lucide-react'
+import { ArrowLeft, Bookmark, BookmarkCheck, Share2, RefreshCw, ThumbsUp, ThumbsDown, ChevronDown, ChevronUp, Sun, Moon, Download } from 'lucide-react'
+import { jsPDF } from 'jspdf'
+import html2canvas from 'html2canvas'
 import api from '../lib/api'
 import usePrefsStore from '../store/prefsStore'
 import useAuthStore from '../store/authStore'
@@ -46,6 +48,7 @@ export default function BriefDisplayPage() {
     const [copied, setCopied] = useState(false)
     const [poorQualityCount, setPoorQualityCount] = useState(0)
     const [showCustomize, setShowCustomize] = useState(false)
+    const [exportingPDF, setExportingPDF] = useState(false)
 
     useEffect(() => {
         fetchBrief()
@@ -110,6 +113,38 @@ export default function BriefDisplayPage() {
         try {
             await api.post(`/api/briefs/${id}/feedback`, { section, rating: value })
         } catch (e) { }
+    }
+
+    const exportToPDF = async () => {
+        if (!briefMeta) return
+        setExportingPDF(true)
+        try {
+            const el = document.getElementById('brief-content')
+            if (!el) throw new Error('Content not found')
+            const canvas = await html2canvas(el, { scale: 2 })
+            const imgData = canvas.toDataURL('image/png')
+            const pdf = new jsPDF('p', 'mm', 'a4')
+            const pdfWidth = pdf.internal.pageSize.getWidth()
+            const pdfHeight = (canvas.height * pdfWidth) / canvas.width
+            let heightLeft = pdfHeight
+            let position = 0
+
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight)
+            heightLeft -= pdf.internal.pageSize.getHeight()
+
+            while (heightLeft >= 0) {
+                position = heightLeft - pdfHeight
+                pdf.addPage()
+                pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, pdfHeight)
+                heightLeft -= pdf.internal.pageSize.getHeight()
+            }
+
+            const dateStr = new Date().toISOString().split('T')[0]
+            pdf.save(`${briefMeta.company_name.replace(/\s+/g, '-')}-brief-${dateStr}.pdf`)
+        } catch (e) {
+            console.error('PDF Export failed', e)
+        }
+        setExportingPDF(false)
     }
 
     const formatDate = (iso) => {
@@ -184,6 +219,11 @@ export default function BriefDisplayPage() {
                             {saved ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
                             {!isMobile && (saved ? 'Saved' : 'Save')}
                         </button>
+                        <button onClick={exportToPDF} disabled={exportingPDF}
+                            style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '4px', padding: isMobile ? '0.4rem' : '0.4rem 0.75rem', color: exportingPDF ? 'var(--accent)' : 'var(--text-sec)', cursor: exportingPDF ? 'wait' : 'pointer', fontSize: '0.8rem', fontFamily: 'Space Grotesk, sans-serif', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <Download size={14} />
+                            {!isMobile && (exportingPDF ? 'Exporting...' : 'Export PDF')}
+                        </button>
                         <button onClick={handleShare}
                             style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '4px', padding: isMobile ? '0.4rem' : '0.4rem 0.75rem', color: copied ? '#22C55E' : 'var(--text-sec)', cursor: 'pointer', fontSize: '0.8rem', fontFamily: 'Space Grotesk, sans-serif', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                             <Share2 size={14} />
@@ -198,7 +238,7 @@ export default function BriefDisplayPage() {
                 </div>
             </nav>
 
-            <div style={{ maxWidth: '900px', margin: '0 auto', padding: isMobile ? '1.5rem 1rem' : '2rem 1.5rem' }}>
+            <div id="brief-content" style={{ maxWidth: '900px', margin: '0 auto', padding: isMobile ? '1.5rem 1rem' : '2rem 1.5rem', background: 'var(--bg)' }}>
 
                 {/* Header */}
                 <div style={{ marginBottom: '2rem' }}>
