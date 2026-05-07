@@ -20,10 +20,14 @@ LENGTH_INSTRUCTIONS = {
 }
 
 
-def build_crew(company_name: str, length: str, sections: list) -> Crew:
+def build_crew(company_name: str, length: str, sections: list, custom_prompt: str = "") -> Crew:
     llm = get_llm()
     length_instruction = LENGTH_INSTRUCTIONS.get(length, LENGTH_INSTRUCTIONS["medium"])
     sections_str = ", ".join(sections)
+    if custom_prompt:
+        if "custom_focus" not in sections:
+            sections = sections + ["custom_focus"]
+        sections_str = ", ".join(sections)
 
     # ── AGENT 1: Researcher ──────────────────────────────────────────────────
     researcher = Agent(
@@ -127,6 +131,7 @@ def build_crew(company_name: str, length: str, sections: list) -> Crew:
             f"- 2-3 potential risks or sensitive topics to avoid or address carefully\n\n"
             f"Sections requested: {sections_str}. "
             f"Length style: {length_instruction}"
+            + (f"\n\nADDITIONAL FOCUS FROM USER: {custom_prompt}\nMake sure your analysis specifically addresses this angle. Weave it into the relevant sections." if custom_prompt else "")
         ),
         expected_output=(
             "A structured analysis with: talking_points (list), watch_out_for (list), "
@@ -142,20 +147,24 @@ def build_crew(company_name: str, length: str, sections: list) -> Crew:
             f"Using all research and analysis, generate a structured pre-meeting brief "
             f"for {company_name} as a single valid JSON object.\n\n"
             f"The JSON must have these top-level keys: "
-            f"summary, news, financials, social_sentiment, talking_points, watch_out_for.\n\n"
+            f"summary, news, financials, social_sentiment, talking_points, watch_out_for"
+            + (f", custom_focus" if custom_prompt else "") + ".\n\n"
             f"Each section object must have:\n"
             f"  - 'content': the actual brief content ({length_instruction})\n"
             f"  - 'confidence': one of 'high', 'medium', or 'low'\n"
             f"  - 'sources': list of URLs used for this section (empty list if none)\n\n"
+            + (f"\n\nCRITICAL REQUIREMENT: You MUST include a 'custom_focus' key in your JSON output. This is mandatory, not optional. The user has specifically asked: '{custom_prompt}'\n\nThe 'custom_focus' section must:\n- Directly and specifically answer the user's question\n- Give actionable, specific advice based on the research\n- NOT be generic — reference actual facts found about the company\n- Have this exact structure:\n  \"custom_focus\": {{\n    \"content\": \"[specific answer to the user's question]\",\n    \"confidence\": \"high\" or \"medium\" or \"low\",\n    \"sources\": [list of relevant URLs]\n  }}\n\nIf you omit custom_focus from the JSON, your output will be rejected. It must appear as a top-level key.\n\n" if custom_prompt else "") +
             f"Only include sections from this list: {sections_str}. "
             f"If a section is not in the list, omit it entirely.\n\n"
             f"CRITICAL: Your ENTIRE response must be ONLY the JSON object. "
             f"No explanation before or after. No markdown code fences. Pure JSON only."
+            + (f"\n\nUSER-SPECIFIED FOCUS: {custom_prompt}\nEnsure this perspective is reflected in the brief content." if custom_prompt else "")
         ),
         expected_output=(
             "A single valid JSON object with the brief sections. "
             "Each section has 'content', 'confidence', and 'sources' keys. "
             "Output must be parseable by json.loads() with zero modification."
+            + (f" MUST include 'custom_focus' key with specific answer to: {custom_prompt}" if custom_prompt else "")
         ),
         agent=briefing_writer,
         context=[research_task, analysis_task],
@@ -171,7 +180,7 @@ def build_crew(company_name: str, length: str, sections: list) -> Crew:
     return crew
 
 
-def run_brief(company_name: str, length: str = "medium", sections: list = None) -> dict:
+def run_brief(company_name: str, length: str = "medium", sections: list = None, custom_prompt: str = "") -> dict:
     """
     Runs the CrewAI pipeline for a company and returns:
     {
@@ -185,7 +194,7 @@ def run_brief(company_name: str, length: str = "medium", sections: list = None) 
         sections = ["summary", "news", "financials", "social_sentiment",
                     "talking_points", "watch_out_for"]
 
-    crew = build_crew(company_name, length, sections)
+    crew = build_crew(company_name, length, sections, custom_prompt)
     result = crew.kickoff()
 
     # result.raw is the final task output string
