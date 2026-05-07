@@ -113,12 +113,12 @@ export default function DashboardPage() {
 
     const formatDate = (iso) => {
         if (!iso) return ''
-        return new Date(iso.endsWith('Z') ? iso : iso + 'Z').toLocaleString(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+        return new Date(iso.endsWith('Z') || iso.includes('+') ? iso : iso + 'Z').toLocaleString(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
     }
 
     const formatLastBriefed = (isoString) => {
         if (!isoString || isoString === 'null' || isoString === 'undefined') return null
-        const dateStr = isoString.endsWith('Z') ? isoString : isoString + 'Z'
+        const dateStr = isoString.endsWith('Z') || isoString.includes('+') ? isoString : isoString + 'Z'
         const date = new Date(dateStr)
         if (isNaN(date.getTime())) return null
         const diffMs = new Date() - date
@@ -138,7 +138,7 @@ export default function DashboardPage() {
 
     const isWithin7Days = (isoString) => {
         if (!isoString) return false
-        return (new Date() - new Date(isoString.endsWith('Z') ? isoString : isoString + 'Z')) / (1000 * 60 * 60 * 24) <= 7
+        return (new Date() - new Date(isoString.endsWith('Z') || isoString.includes('+') ? isoString : isoString + 'Z')) / (1000 * 60 * 60 * 24) <= 7
     }
 
     const isMobile = useIsMobile()
@@ -468,7 +468,7 @@ export default function DashboardPage() {
                             <div style={{ color: '#C8FF00', fontSize: '1.5rem', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif', marginTop: 'auto', lineHeight: '1.2' }}>
                                 {briefs.length > 0 ? (
                                     formatLastBriefed(briefs[0].created_at) ||
-                                    new Date(briefs[0].created_at + 'Z').toLocaleDateString(undefined, {month:'short', day:'numeric'})
+                                    new Date(briefs[0].created_at.endsWith('Z') || briefs[0].created_at.includes('+') ? briefs[0].created_at : briefs[0].created_at + 'Z').toLocaleDateString(undefined, {month:'short', day:'numeric'})
                                 ) : 'None yet'}
                             </div>
                         </div>

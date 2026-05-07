@@ -149,7 +149,7 @@ export default function BriefDisplayPage() {
 
     const formatDate = (iso) => {
         if (!iso) return ''
-        return new Date(iso.endsWith('Z') ? iso : iso + 'Z').toLocaleString(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+        return new Date(iso.endsWith('Z') || iso.includes('+') ? iso : iso + 'Z').toLocaleString(undefined, { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })
     }
 
     const sections = brief ? Object.keys(brief).sort((a, b) => {
