@@ -117,8 +117,10 @@ export default function DashboardPage() {
     }
 
     const formatLastBriefed = (isoString) => {
-        if (!isoString) return null
-        const date = new Date(isoString.endsWith('Z') ? isoString : isoString + 'Z')
+        if (!isoString || isoString === 'null' || isoString === 'undefined') return null
+        const dateStr = isoString.endsWith('Z') ? isoString : isoString + 'Z'
+        const date = new Date(dateStr)
+        if (isNaN(date.getTime())) return null
         const diffMs = new Date() - date
         const diffMins = Math.floor(diffMs / 60000)
         
@@ -464,7 +466,7 @@ export default function DashboardPage() {
                         <div style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                             <div style={{ color: 'var(--text-sec)', fontSize: '0.8rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Last Brief Generated</div>
                             <div style={{ color: '#C8FF00', fontSize: '1.5rem', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif', marginTop: 'auto', lineHeight: '1.2' }}>
-                                {briefs.length > 0 ? formatLastBriefed(briefs[0].created_at) : 'None yet'}
+                                {briefs.length > 0 ? (formatLastBriefed(briefs[0].created_at) || 'Recently') : 'None yet'}
                             </div>
                         </div>
                     </div>
