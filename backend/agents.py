@@ -246,6 +246,7 @@ def build_comparison_crew(company1: str, company2: str, length: str) -> Crew:
         llm=llm,
         verbose=False,
         allow_delegation=False,
+        max_iter=4,
     )
 
     researcher2 = Agent(
@@ -256,6 +257,7 @@ def build_comparison_crew(company1: str, company2: str, length: str) -> Crew:
         llm=llm,
         verbose=False,
         allow_delegation=False,
+        max_iter=4,
     )
 
     analyst = Agent(
@@ -279,14 +281,42 @@ def build_comparison_crew(company1: str, company2: str, length: str) -> Crew:
     )
 
     task1 = Task(
-        description=f"Research {company1} thoroughly using targeted web searches. Run searches sequentially. Compile a structured research summary.",
-        expected_output="Detailed research summary including company overview, recent news items, financial snapshot, and competitive landscape. Include sources.",
+        description=(
+            f"Research {company1} thoroughly using targeted web searches.\n\n"
+            f"IMPORTANT: You MUST run searches ONE AT A TIME. Do NOT call multiple "
+            f"tools simultaneously. Run one search, wait for the results, read them, "
+            f"then run the next search. This is critical to avoid overloading the model.\n\n"
+            f"Execute these searches sequentially, one after another:\n"
+            f"  Step 1: Search for '{company1} latest news 2025 2026' — wait for results.\n"
+            f"  Step 2: Fetch financial data for {company1}.\n\n"
+            f"After ALL searches are complete, compile ALL findings into a structured "
+            f"research summary. For every fact, note the source URL. "
+            f"Note how many search results were returned total.\n\n"
+            f"Once all searches are complete, write a summary of maximum 200 words as plain "
+            f"sentences only. No markdown, no headers, no bullet points, no lists. Just plain "
+            f"prose. Do not call any more tools."
+        ),
+        expected_output="Detailed research summary including company overview, recent news items, financial snapshot. Include sources.",
         agent=researcher1,
     )
 
     task2 = Task(
-        description=f"Research {company2} thoroughly using targeted web searches. Run searches sequentially. Compile a structured research summary.",
-        expected_output="Detailed research summary including company overview, recent news items, financial snapshot, and competitive landscape. Include sources.",
+        description=(
+            f"Research {company2} thoroughly using targeted web searches.\n\n"
+            f"IMPORTANT: You MUST run searches ONE AT A TIME. Do NOT call multiple "
+            f"tools simultaneously. Run one search, wait for the results, read them, "
+            f"then run the next search. This is critical to avoid overloading the model.\n\n"
+            f"Execute these searches sequentially, one after another:\n"
+            f"  Step 1: Search for '{company2} latest news 2025 2026' — wait for results.\n"
+            f"  Step 2: Fetch financial data for {company2}.\n\n"
+            f"After ALL searches are complete, compile ALL findings into a structured "
+            f"research summary. For every fact, note the source URL. "
+            f"Note how many search results were returned total.\n\n"
+            f"Once all searches are complete, write a summary of maximum 200 words as plain "
+            f"sentences only. No markdown, no headers, no bullet points, no lists. Just plain "
+            f"prose. Do not call any more tools."
+        ),
+        expected_output="Detailed research summary including company overview, recent news items, financial snapshot. Include sources.",
         agent=researcher2,
     )
 
