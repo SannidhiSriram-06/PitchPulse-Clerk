@@ -929,6 +929,20 @@ def _register_routes(app):
         db.session.commit()
         return jsonify({"message": "Removed from watchlist."}), 200
 
+    @app.route("/api/admin/migrate-scheduled", methods=["POST"])
+    def migrate_scheduled():
+        secret = request.headers.get("X-Migration-Secret", "")
+        if secret != "pitchpulse-migrate-2026":
+            return jsonify({"error": "Unauthorized"}), 401
+        try:
+            from sqlalchemy import text
+            with db.engine.connect() as conn:
+                conn.execute(text('ALTER TABLE briefs ADD COLUMN IF NOT EXISTS scheduled_meeting_time TIMESTAMP'))
+                conn.commit()
+            return jsonify({"message": "Migration successful"}), 200
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
 
 
 
