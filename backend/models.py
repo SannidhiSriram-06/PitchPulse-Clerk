@@ -52,6 +52,7 @@ class Brief(db.Model):
     saved = db.Column(db.Boolean, default=False)     # NEW — user bookmarked this brief
     feedback_summary = db.Column(db.Text, nullable=True)  # NEW — JSON {"news": "up", ...}
     share_token = db.Column(db.String(64), unique=True, nullable=True)  # NEW — public share token
+    scheduled_meeting_time = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), default=lambda: datetime.now(UTC))
 
     # Relationship
