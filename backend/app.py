@@ -731,8 +731,8 @@ def _register_routes(app):
         if sources:
             html_content += "<h3>Sources</h3><ul>"
             for source in sources:
-                url = source.get("url", "#")
-                title = source.get("title", url)
+                url = source if isinstance(source, str) else source.get("url", "#")
+                title = source if isinstance(source, str) else source.get("title", url)
                 html_content += f'<li><a href="{url}">{title}</a></li>'
             html_content += "</ul>"
             
