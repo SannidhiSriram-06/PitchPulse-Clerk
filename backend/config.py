@@ -21,6 +21,7 @@ class Config:
     # External APIs
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
     TAVILY_API_KEY = os.getenv("TAVILY_API_KEY")
+    ALPHA_VANTAGE_API_KEY = os.getenv("ALPHA_VANTAGE_API_KEY", "")
 
     # Resend
     RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
