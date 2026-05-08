@@ -234,6 +234,115 @@ def run_brief(company_name: str, length: str = "medium", sections: list = None, 
     }
 
 
+def build_comparison_crew(company1: str, company2: str, length: str) -> Crew:
+    llm = get_llm()
+    length_instruction = LENGTH_INSTRUCTIONS.get(length, LENGTH_INSTRUCTIONS["medium"])
+
+    researcher1 = Agent(
+        role=f"Company Intelligence Researcher ({company1})",
+        goal=f"Find comprehensive information about {company1}.",
+        backstory="Expert business intelligence analyst.",
+        tools=[company_web_search, company_financial_data],
+        llm=llm,
+        verbose=False,
+        allow_delegation=False,
+    )
+
+    researcher2 = Agent(
+        role=f"Company Intelligence Researcher ({company2})",
+        goal=f"Find comprehensive information about {company2}.",
+        backstory="Expert business intelligence analyst.",
+        tools=[company_web_search, company_financial_data],
+        llm=llm,
+        verbose=False,
+        allow_delegation=False,
+    )
+
+    analyst = Agent(
+        role="Strategic Business Analyst",
+        goal=f"Compare {company1} and {company2} across financials, market position, recent news, strengths/weaknesses, and recommend which is more favorable to sell to.",
+        backstory="Former McKinsey consultant turned sales strategist.",
+        tools=[],
+        llm=llm,
+        verbose=False,
+        allow_delegation=False,
+    )
+
+    formatter = Agent(
+        role="Pre-Meeting Brief Specialist",
+        goal="Format the comparison into strict JSON.",
+        backstory="Meticulous technical writer. Always outputs valid JSON.",
+        tools=[],
+        llm=llm,
+        verbose=False,
+        allow_delegation=False,
+    )
+
+    task1 = Task(
+        description=f"Research {company1} thoroughly using targeted web searches. Run searches sequentially. Compile a structured research summary.",
+        expected_output="Detailed research summary including company overview, recent news items, financial snapshot, and competitive landscape. Include sources.",
+        agent=researcher1,
+    )
+
+    task2 = Task(
+        description=f"Research {company2} thoroughly using targeted web searches. Run searches sequentially. Compile a structured research summary.",
+        expected_output="Detailed research summary including company overview, recent news items, financial snapshot, and competitive landscape. Include sources.",
+        agent=researcher2,
+    )
+
+    task3 = Task(
+        description=f"Compare {company1} and {company2} based on the research. {length_instruction}",
+        expected_output="Strategic analysis comparing financials, market position, news, strengths/weaknesses, and a final recommendation.",
+        agent=analyst,
+        context=[task1, task2],
+    )
+
+    task4 = Task(
+        description=(
+            f"Format the comparison into a single valid JSON object.\n"
+            f"Keys must be exactly: company1_summary, company2_summary, financial_comparison, market_position, recent_developments, strengths_weaknesses, recommendation.\n"
+            f"Each section must have: 'content' ({length_instruction}), 'confidence' ('high', 'medium', or 'low'), and 'sources' (list of URLs).\n"
+            f"CRITICAL: Output pure JSON only."
+        ),
+        expected_output="A single valid JSON object with the requested keys.",
+        agent=formatter,
+        context=[task3],
+    )
+
+    return Crew(
+        agents=[researcher1, researcher2, analyst, formatter],
+        tasks=[task1, task2, task3, task4],
+        process=Process.sequential,
+        verbose=True,
+    )
+
+
+def run_comparison(company1: str, company2: str, length: str = "medium") -> dict:
+    crew = build_comparison_crew(company1, company2, length)
+    result = crew.kickoff()
+
+    raw_output = result.raw if hasattr(result, "raw") else str(result)
+    brief_json = _extract_json(raw_output)
+
+    sources_used = []
+    if isinstance(brief_json, dict):
+        for section_data in brief_json.values():
+            if isinstance(section_data, dict):
+                sources_used.extend(section_data.get("sources", []))
+    sources_used = list(set(sources_used))
+
+    limited_data = False
+    if not sources_used or len(sources_used) < 2:
+        limited_data = True
+
+    return {
+        "brief": brief_json,
+        "sources_used": sources_used,
+        "limited_data": limited_data,
+        "raw_output": raw_output,
+    }
+
+
 def _extract_json(text: str) -> dict:
     """
     Extracts and parses JSON from agent output.

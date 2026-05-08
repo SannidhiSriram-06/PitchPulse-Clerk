@@ -18,6 +18,13 @@ const SECTION_LABELS = {
     talking_points: 'Talking Points',
     watch_out_for: 'Watch Out For',
     custom_focus: 'Custom Focus',
+    company1_summary: 'Company 1',
+    company2_summary: 'Company 2',
+    financial_comparison: 'Financials',
+    market_position: 'Market Position',
+    recent_developments: 'Recent News',
+    strengths_weaknesses: 'Strengths & Weaknesses',
+    recommendation: 'Recommendation',
 }
 
 const CONFIDENCE_COLORS = {
@@ -49,6 +56,16 @@ export default function BriefDisplayPage() {
     const [poorQualityCount, setPoorQualityCount] = useState(0)
     const [showCustomize, setShowCustomize] = useState(false)
     const [exportingPDF, setExportingPDF] = useState(false)
+    const [showSchedule, setShowSchedule] = useState(false)
+    const [meetingTime, setMeetingTime] = useState('')
+    const [meetingEmail, setMeetingEmail] = useState(user?.email || '')
+    const [scheduleStatus, setScheduleStatus] = useState('')
+    const [diffData, setDiffData] = useState(null)
+    const [showDiff, setShowDiff] = useState(false)
+
+    useEffect(() => {
+        if (user?.email && !meetingEmail) setMeetingEmail(user.email)
+    }, [user])
 
     useEffect(() => {
         fetchBrief()
@@ -80,6 +97,14 @@ export default function BriefDisplayPage() {
                     console.error('Failed to parse feedback_summary', e)
                 }
             }
+            if (data.company_name) {
+                try {
+                    const diffRes = await api.get(`/api/briefs/company/${encodeURIComponent(data.company_name)}/diff`)
+                    setDiffData(diffRes.data)
+                } catch (e) {
+                    console.error('Failed to fetch diff', e)
+                }
+            }
         } catch (e) {
             setError(e.response?.data?.error || 'Could not load brief.')
         }
@@ -93,6 +118,26 @@ export default function BriefDisplayPage() {
             setSaved(!saved)
         } catch (e) { }
         setSaving(false)
+    }
+
+    const handleSchedule = async () => {
+        if (!meetingTime || !meetingEmail) {
+            setScheduleStatus("Please fill out all fields.")
+            return
+        }
+        try {
+            await api.post(`/api/briefs/${id}/schedule`, {
+                meeting_time: meetingTime,
+                meeting_email: meetingEmail
+            })
+            setScheduleStatus("✓ Brief sent to your email!")
+            setTimeout(() => {
+                setScheduleStatus('')
+                setShowSchedule(false)
+            }, 3000)
+        } catch (e) {
+            setScheduleStatus("Failed to send. Try again.")
+        }
     }
 
     const handleShare = async () => {
@@ -224,6 +269,16 @@ export default function BriefDisplayPage() {
                             <Download size={14} />
                             {!isMobile && (exportingPDF ? 'Exporting...' : 'Export PDF')}
                         </button>
+                        <button onClick={() => setShowSchedule(!showSchedule)}
+                            style={{ background: showSchedule ? 'var(--accent-15)' : 'none', border: '1px solid var(--border)', borderRadius: '4px', padding: isMobile ? '0.4rem' : '0.4rem 0.75rem', color: showSchedule ? 'var(--accent)' : 'var(--text-sec)', cursor: 'pointer', fontSize: '0.8rem', fontFamily: 'Space Grotesk, sans-serif', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            📅 {!isMobile && 'Schedule'}
+                        </button>
+                        {diffData?.has_diff && (
+                            <button onClick={() => setShowDiff(!showDiff)}
+                                style={{ background: showDiff ? 'var(--accent-15)' : 'none', border: '1px solid var(--border)', borderRadius: '4px', padding: isMobile ? '0.4rem' : '0.4rem 0.75rem', color: showDiff ? 'var(--accent)' : 'var(--text-sec)', cursor: 'pointer', fontSize: '0.8rem', fontFamily: 'Space Grotesk, sans-serif', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                🔄 {!isMobile && "What's New"}
+                            </button>
+                        )}
                         <button onClick={handleShare}
                             style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '4px', padding: isMobile ? '0.4rem' : '0.4rem 0.75rem', color: copied ? '#22C55E' : 'var(--text-sec)', cursor: 'pointer', fontSize: '0.8rem', fontFamily: 'Space Grotesk, sans-serif', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                             <Share2 size={14} />
@@ -237,6 +292,27 @@ export default function BriefDisplayPage() {
                 )}
                 </div>
             </nav>
+
+            {/* Schedule Panel */}
+            {showSchedule && (
+                <div style={{ background: 'var(--surface)', borderBottom: '1px solid var(--border)', padding: '1rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                        <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-sec)', marginBottom: '0.25rem' }}>Meeting time</label>
+                            <input type="datetime-local" value={meetingTime} onChange={(e) => setMeetingTime(e.target.value)} min={new Date().toISOString().slice(0, 16)} style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', padding: '0.5rem', borderRadius: '4px', fontSize: '0.875rem' }} />
+                        </div>
+                        <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-sec)', marginBottom: '0.25rem' }}>Send to</label>
+                            <input type="email" value={meetingEmail} onChange={(e) => setMeetingEmail(e.target.value)} style={{ background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--text)', padding: '0.5rem', borderRadius: '4px', fontSize: '0.875rem', minWidth: '200px' }} />
+                        </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                        <button onClick={handleSchedule} style={{ background: 'var(--accent)', color: 'black', border: 'none', padding: '0.5rem 1rem', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>Send Brief to My Email</button>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-sec)' }}>We'll send this brief to your email right away</span>
+                    </div>
+                    {scheduleStatus && <div style={{ fontSize: '0.875rem', color: scheduleStatus.includes('✓') ? '#22C55E' : '#EF4444' }}>{scheduleStatus}</div>}
+                </div>
+            )}
 
             <div id="brief-content" style={{ maxWidth: '900px', margin: '0 auto', padding: isMobile ? '1.5rem 1rem' : '2rem 1.5rem', background: 'var(--bg)' }}>
 
@@ -260,6 +336,39 @@ export default function BriefDisplayPage() {
                         <span style={{ color: 'var(--accent)', fontSize: '0.8rem' }}>
                             Give feedback
                         </span>
+                    </div>
+                )}
+
+                {/* Diff Panel */}
+                {showDiff && diffData?.has_diff && (
+                    <div style={{ background: 'var(--surface)', border: '1px solid var(--accent-40)', borderRadius: '6px', padding: '1.5rem', marginBottom: '1.5rem', position: 'relative' }}>
+                        <button onClick={() => setShowDiff(false)} style={{ position: 'absolute', top: '1rem', right: '1rem', background: 'none', border: 'none', color: 'var(--text-sec)', cursor: 'pointer', fontSize: '1.2rem' }}>×</button>
+                        <h3 style={{ fontSize: '1rem', fontWeight: 'bold', marginBottom: '1rem', color: 'var(--text)' }}>Changes since {formatDate(diffData.compared_dates[1])}</h3>
+                        
+                        {['summary', 'news'].map(section => {
+                            const added = diffData.changes[section]?.added || []
+                            const removed = diffData.changes[section]?.removed || []
+                            if (added.length === 0 && removed.length === 0) return null
+                            
+                            return (
+                                <div key={section} style={{ marginBottom: '1rem' }}>
+                                    <h4 style={{ fontSize: '0.8rem', color: 'var(--text-sec)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>{SECTION_LABELS[section] || section}</h4>
+                                    {added.map((text, i) => (
+                                        <div key={`add-${i}`} style={{ display: 'flex', gap: '0.5rem', color: '#22C55E', fontSize: '0.875rem', marginBottom: '0.25rem' }}>
+                                            <span>+</span><span>{text}.</span>
+                                        </div>
+                                    ))}
+                                    {removed.map((text, i) => (
+                                        <div key={`rem-${i}`} style={{ display: 'flex', gap: '0.5rem', color: '#EF4444', opacity: 0.8, fontSize: '0.875rem', marginBottom: '0.25rem', textDecoration: 'line-through' }}>
+                                            <span>−</span><span>{text}.</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )
+                        })}
+                        {['summary', 'news'].every(section => (diffData.changes[section]?.added || []).length === 0 && (diffData.changes[section]?.removed || []).length === 0) && (
+                            <p style={{ fontSize: '0.875rem', color: 'var(--text-sec)' }}>No significant changes detected.</p>
+                        )}
                     </div>
                 )}
 

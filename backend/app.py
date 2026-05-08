@@ -445,6 +445,86 @@ def _register_routes(app):
             "briefs_remaining_this_hour": remaining,
         }), 200
 
+    # ── Generate Comparison Brief ─────────────────────────────────────────────
+
+    @app.route("/api/brief/compare", methods=["POST"])
+    @require_auth
+    def compare_brief():
+        from models import Brief
+        from agents import run_comparison
+
+        user = g.current_user
+
+        # Rate limit check (requires 2 briefs worth of limit)
+        allowed, remaining, reset_in_minutes = _check_and_increment_rate_limit(user)
+        if not allowed:
+            return jsonify({"error": "Rate limit reached. Upgrade to Pro for unlimited briefs.", "reset_in_minutes": reset_in_minutes}), 429
+            
+        allowed2, remaining2, reset_in_minutes2 = _check_and_increment_rate_limit(user)
+        if not allowed2:
+            return jsonify({"error": "Rate limit reached. Comparisons cost 2 briefs. Upgrade to Pro.", "reset_in_minutes": reset_in_minutes2}), 429
+
+        data = request.get_json(silent=True) or {}
+
+        company1_raw = data.get("company1", "")
+        company1, err = sanitize_company_name(company1_raw)
+        if err: return jsonify({"error": f"Company 1: {err}"}), 400
+
+        company2_raw = data.get("company2", "")
+        company2, err2 = sanitize_company_name(company2_raw)
+        if err2: return jsonify({"error": f"Company 2: {err2}"}), 400
+
+        length = data.get("length", "medium")
+        if length not in ("short", "medium", "long"):
+            return jsonify({"error": "length must be 'short', 'medium', or 'long'."}), 400
+
+        try:
+            Config.validate()
+        except EnvironmentError as e:
+            return jsonify({"error": str(e)}), 500
+
+        import time
+        start = time.time()
+        try:
+            result = run_comparison(company1, company2, length)
+        except Exception as e:
+            return jsonify({"error": "Agent execution failed. Please try again.", "detail": str(e)}), 500
+        elapsed_ms = int((time.time() - start) * 1000)
+
+        if not result or result.get("brief", {}).get("parse_error"):
+            return jsonify({"error": "We couldn't find enough data. Try different names."}), 400
+
+        sources = result.get("sources_used", [])
+        limited = result.get("limited_data", False)
+        
+        company_name_combo = f"{company1} vs {company2}"
+        sections_str = "company1_summary,company2_summary,financial_comparison,market_position,recent_developments,strengths_weaknesses,recommendation"
+        
+        brief_record = Brief(
+            user_id=user.id,
+            company_name=company_name_combo,
+            length=length,
+            sections_requested=sections_str,
+            brief_json=json.dumps(result.get("brief", {})),
+            sources_used=json.dumps(sources),
+            generation_time_ms=elapsed_ms,
+            limited_data=limited,
+            saved=False,
+            feedback_summary=None,
+            share_token=None,
+        )
+        db.session.add(brief_record)
+        db.session.commit()
+
+        return jsonify({
+            "brief": result.get("brief", {}),
+            "sources_used": sources,
+            "generation_time_ms": elapsed_ms,
+            "limited_data": limited,
+            "brief_id": brief_record.id,
+            "briefs_remaining_this_hour": remaining2,
+        }), 200
+
     # ── List Briefs ───────────────────────────────────────────────────────────
 
     @app.route("/api/briefs", methods=["GET"])
@@ -602,6 +682,123 @@ def _register_routes(app):
             "brief": json.loads(brief.brief_json) if brief.brief_json else {},
             "sources_used": json.loads(brief.sources_used) if brief.sources_used else [],
             "created_at": brief.created_at.isoformat() if brief.created_at else None,
+        }), 200
+
+    # ── Schedule Brief ────────────────────────────────────────────────────────
+
+    @app.route("/api/briefs/<int:brief_id>/schedule", methods=["POST"])
+    @require_auth
+    def schedule_brief(brief_id):
+        from models import Brief
+        import resend
+        
+        data = request.get_json(silent=True) or {}
+        meeting_time_str = data.get("meeting_time")
+        meeting_email = data.get("meeting_email") or g.current_user.email
+        
+        if not meeting_time_str:
+            return jsonify({"error": "meeting_time is required"}), 400
+            
+        try:
+            meeting_time = datetime.fromisoformat(meeting_time_str)
+            if meeting_time.tzinfo is None:
+                meeting_time = meeting_time.replace(tzinfo=UTC)
+        except ValueError:
+            return jsonify({"error": "Invalid meeting_time format"}), 400
+            
+        if meeting_time < datetime.now(UTC):
+            return jsonify({"error": "meeting_time must be in the future"}), 400
+            
+        brief = Brief.query.filter_by(id=brief_id, user_id=g.current_user.id).first()
+        if not brief:
+            return jsonify({"error": "Brief not found"}), 404
+            
+        brief.scheduled_meeting_time = meeting_time
+        db.session.commit()
+        
+        # Format brief as HTML email
+        brief_data = json.loads(brief.brief_json) if brief.brief_json else {}
+        html_content = f"<h2>PitchPulse Brief for {brief.company_name}</h2>"
+        for section, content in brief_data.items():
+            if section not in ["confidence_score", "parse_error"]:
+                html_content += f'<div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px;"><h3>{section.replace("_", " ").title()}</h3><p>{content}</p></div>'
+        
+        confidence = brief_data.get("confidence_score")
+        if confidence:
+            html_content += f'<div style="margin-top: 10px;"><strong>Confidence Score:</strong> <span style="background: #eee; padding: 2px 6px; border-radius: 10px;">{confidence}/100</span></div>'
+            
+        sources = json.loads(brief.sources_used) if brief.sources_used else []
+        if sources:
+            html_content += "<h3>Sources</h3><ul>"
+            for source in sources:
+                url = source.get("url", "#")
+                title = source.get("title", url)
+                html_content += f'<li><a href="{url}">{title}</a></li>'
+            html_content += "</ul>"
+            
+        try:
+            resend.api_key = current_app.config["RESEND_API_KEY"]
+            resend.Emails.send({
+                "from": "onboarding@resend.dev",
+                "to": meeting_email,
+                "subject": f"PitchPulse Brief: {brief.company_name} — Your meeting is coming up",
+                "html": html_content
+            })
+        except Exception as e:
+            print(f"Failed to send scheduled brief email: {e}")
+            return jsonify({"error": "Failed to send email"}), 500
+            
+        return jsonify({"message": f"Brief sent to {meeting_email}"}), 200
+
+    # ── Diff Briefs ───────────────────────────────────────────────────────────
+
+    @app.route("/api/briefs/company/<company_name>/diff", methods=["GET"])
+    @require_auth
+    def diff_briefs(company_name):
+        from models import Brief
+        
+        briefs = Brief.query.filter_by(user_id=g.current_user.id, company_name=company_name).order_by(Brief.created_at.desc()).limit(2).all()
+        
+        if len(briefs) < 2:
+            return jsonify({"has_diff": False, "message": "Generate at least 2 briefs for this company to see what changed"}), 200
+            
+        new_brief = briefs[0]
+        old_brief = briefs[1]
+        
+        new_data = json.loads(new_brief.brief_json) if new_brief.brief_json else {}
+        old_data = json.loads(old_brief.brief_json) if old_brief.brief_json else {}
+        
+        def diff_section(section_name):
+            new_text = new_data.get(section_name, "")
+            old_text = old_data.get(section_name, "")
+            
+            if isinstance(new_text, dict):
+                new_text = new_text.get("content", "")
+            elif isinstance(new_text, list):
+                new_text = " ".join([str(item) for item in new_text])
+            if isinstance(old_text, dict):
+                old_text = old_text.get("content", "")
+            elif isinstance(old_text, list):
+                old_text = " ".join([str(item) for item in old_text])
+                
+            new_sentences = set([s.strip() for s in str(new_text).split(". ") if s.strip()])
+            old_sentences = set([s.strip() for s in str(old_text).split(". ") if s.strip()])
+            
+            added = list(new_sentences - old_sentences)
+            removed = list(old_sentences - new_sentences)
+            return {"added": added, "removed": removed}
+            
+        return jsonify({
+            "has_diff": True,
+            "company_name": company_name,
+            "compared_dates": [
+                new_brief.created_at.isoformat() if new_brief.created_at else None,
+                old_brief.created_at.isoformat() if old_brief.created_at else None
+            ],
+            "changes": {
+                "summary": diff_section("summary"),
+                "news": diff_section("news")
+            }
         }), 200
 
     # ── Watchlist: Get ────────────────────────────────────────────────────────
