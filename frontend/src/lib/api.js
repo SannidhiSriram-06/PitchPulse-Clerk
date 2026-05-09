@@ -19,9 +19,12 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401) {
-            localStorage.removeItem('token')
-            localStorage.removeItem('user')
-            window.location.href = '/login'
+            const isSharePage = window.location.pathname.startsWith('/brief/share/')
+            if (!isSharePage) {
+                localStorage.removeItem('token')
+                localStorage.removeItem('user')
+                window.location.href = '/login'
+            }
         }
         return Promise.reject(error)
     }

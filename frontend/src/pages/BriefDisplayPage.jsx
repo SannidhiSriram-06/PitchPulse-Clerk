@@ -97,7 +97,7 @@ export default function BriefDisplayPage() {
                     console.error('Failed to parse feedback_summary', e)
                 }
             }
-            if (data.company_name) {
+            if (data.company_name && !isShareView) {
                 try {
                     const diffRes = await api.get(`/api/briefs/company/${encodeURIComponent(data.company_name)}/diff`)
                     setDiffData(diffRes.data)
@@ -229,7 +229,7 @@ export default function BriefDisplayPage() {
     return (
         <div style={{ background: 'var(--bg)', minHeight: '100vh', color: 'var(--text)' }}>
             {isShareView && !user && (
-                <div className="w-full bg-[#C8FF00] text-black px-4 py-2 flex items-center justify-between text-sm font-medium">
+                <div className="w-full px-4 py-2 flex items-center justify-between text-sm font-medium" style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}>
                     <span>Generated with PitchPulse</span>
                     <a href="/register" className="underline font-bold">Get your free account →</a>
                 </div>
@@ -331,7 +331,7 @@ export default function BriefDisplayPage() {
 
                 {/* Poor quality banner */}
                 {poorQualityCount >= 3 && (
-                    <div style={{ background: '#1a1000', border: '1px solid var(--accent-40)', borderRadius: '6px', padding: '0.75rem 1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.875rem' }}>
+                    <div style={{ background: 'var(--accent-15)', border: '1px solid var(--accent-40)', borderRadius: '6px', padding: '0.75rem 1rem', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.875rem' }}>
                         <span style={{ color: 'var(--accent)' }}>Brief quality was poor? Let us know →</span>
                         <span style={{ color: 'var(--accent)', fontSize: '0.8rem' }}>
                             Give feedback
