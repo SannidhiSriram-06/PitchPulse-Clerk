@@ -478,6 +478,10 @@ def _register_routes(app):
         if length not in ("short", "medium", "long"):
             return jsonify({"error": "length must be 'short', 'medium', or 'long'."}), 400
 
+        custom_prompt = data.get("custom_prompt", "").strip()
+        if len(custom_prompt) > 500:
+            return jsonify({"error": "custom_prompt must be 500 characters or fewer."}), 400
+
         try:
             Config.validate()
         except EnvironmentError as e:
@@ -486,7 +490,7 @@ def _register_routes(app):
         import time
         start = time.time()
         try:
-            result = run_comparison(company1, company2, length)
+            result = run_comparison(company1, company2, length, custom_prompt)
         except Exception as e:
             return jsonify({"error": "Agent execution failed. Please try again.", "detail": str(e)}), 500
         elapsed_ms = int((time.time() - start) * 1000)

@@ -36,7 +36,7 @@ export default function BriefGeneratorPage() {
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     const { generating, statusMessage, generateBrief, setStatusMessage } = useBriefStore()
-    const { defaultLength, defaultView } = usePrefsStore()
+    const { defaultLength } = usePrefsStore()
     const { theme, toggleTheme } = useThemeStore()
 
     const [comparisonMode, setComparisonMode] = useState(false)
@@ -78,7 +78,8 @@ export default function BriefGeneratorPage() {
                 const res = await api.post('/api/brief/compare', {
                     company1: company.trim(),
                     company2: company2.trim(),
-                    length
+                    length,
+                    custom_prompt: customPrompt.trim()
                 })
                 clearInterval(statusInterval.current)
                 setIsGenerating(false)
@@ -162,9 +163,7 @@ export default function BriefGeneratorPage() {
                     </button>
                 </div>
 
-                {!comparisonMode && (
-                    <>
-                        {/* Meeting Type */}
+                {/* Meeting Type */}
                         <div style={{ marginBottom: '2.5rem' }}>
                             <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.6rem' }}>MEETING TYPE (OPTIONAL)</label>
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
@@ -188,6 +187,8 @@ export default function BriefGeneratorPage() {
                             </div>
                         </div>
 
+                {!comparisonMode && (
+                    <>
                         {/* Company input */}
                         <div style={{ marginBottom: '2rem' }}>
                             <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.6rem' }}>Company Name</label>
@@ -259,8 +260,10 @@ export default function BriefGeneratorPage() {
                                 })}
                             </div>
                         </div>
+                    </>
+                )}
 
-                        {/* Custom Prompt */}
+                {/* Custom Prompt */}
                         <div style={{ marginBottom: '2.5rem' }}>
                             <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '0.6rem' }}>Custom Focus (optional)</label>
                             <textarea
@@ -278,8 +281,6 @@ export default function BriefGeneratorPage() {
                                 </p>
                             </div>
                         </div>
-                    </>
-                )}
 
                 {error && (
                     <div style={{ background: '#1a0a0a', border: '1px solid #EF4444', borderRadius: '4px', padding: '0.75rem', marginBottom: '1.5rem', color: '#EF4444', fontSize: '0.875rem' }}>

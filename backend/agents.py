@@ -234,7 +234,7 @@ def run_brief(company_name: str, length: str = "medium", sections: list = None, 
     }
 
 
-def build_comparison_crew(company1: str, company2: str, length: str) -> Crew:
+def build_comparison_crew(company1: str, company2: str, length: str, custom_prompt: str = "") -> Crew:
     llm = get_llm()
     length_instruction = LENGTH_INSTRUCTIONS.get(length, LENGTH_INSTRUCTIONS["medium"])
 
@@ -321,7 +321,10 @@ def build_comparison_crew(company1: str, company2: str, length: str) -> Crew:
     )
 
     task3 = Task(
-        description=f"Compare {company1} and {company2} based on the research. {length_instruction}",
+        description=(
+            f"Compare {company1} and {company2} based on the research. {length_instruction}"
+            + (f"\n\nADDITIONAL FOCUS FROM USER: {custom_prompt}\nMake sure your analysis specifically addresses this angle. Weave it into the relevant sections." if custom_prompt else "")
+        ),
         expected_output="Strategic analysis comparing financials, market position, news, strengths/weaknesses, and a final recommendation.",
         agent=analyst,
         context=[task1, task2],
@@ -332,7 +335,8 @@ def build_comparison_crew(company1: str, company2: str, length: str) -> Crew:
             f"Format the comparison into a single valid JSON object.\n"
             f"Keys must be exactly: company1_summary, company2_summary, financial_comparison, market_position, recent_developments, strengths_weaknesses, recommendation.\n"
             f"Each section must have: 'content' ({length_instruction}), 'confidence' ('high', 'medium', or 'low'), and 'sources' (list of URLs).\n"
-            f"CRITICAL: Output pure JSON only."
+            f"CRITICAL: Output pure JSON only.\n"
+            f"CRITICAL: Only include URLs in sources that were actually returned by the research agents. Do NOT invent, fabricate, or guess URLs. If you don't have a real URL for a section, use an empty list [] for sources. Never use example.com or placeholder URLs."
         ),
         expected_output="A single valid JSON object with the requested keys.",
         agent=formatter,
@@ -347,8 +351,8 @@ def build_comparison_crew(company1: str, company2: str, length: str) -> Crew:
     )
 
 
-def run_comparison(company1: str, company2: str, length: str = "medium") -> dict:
-    crew = build_comparison_crew(company1, company2, length)
+def run_comparison(company1: str, company2: str, length: str = "medium", custom_prompt: str = "") -> dict:
+    crew = build_comparison_crew(company1, company2, length, custom_prompt)
     result = crew.kickoff()
 
     raw_output = result.raw if hasattr(result, "raw") else str(result)
