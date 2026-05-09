@@ -49,7 +49,7 @@ export default function CustomizePanel({ onClose }) {
         style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
         <div className="flex items-center justify-between p-4 border-b" style={{ borderColor: 'var(--border)' }}>
           <span className="font-semibold text-sm">Customize</span>
-          <button onClick={onClose} className="text-gray-400 hover:text-white text-lg leading-none">✕</button>
+          <button onClick={onClose} className="text-lg leading-none transition-colors" style={{ color: 'var(--text-sec)' }}>✕</button>
         </div>
         <div className="flex-1 overflow-y-auto p-4 space-y-6">
 
@@ -61,7 +61,7 @@ export default function CustomizePanel({ onClose }) {
                   className="flex-1 py-2 rounded-lg text-sm font-medium border transition-colors capitalize"
                   style={{
                     background: theme === t ? 'var(--accent)' : 'transparent',
-                    color: theme === t ? '#000' : 'var(--text-sec)',
+                    color: theme === t ? 'var(--accent-text)' : 'var(--text-sec)',
                     borderColor: theme === t ? 'var(--accent)' : 'var(--border)'
                   }}>
                   {t}
@@ -78,7 +78,7 @@ export default function CustomizePanel({ onClose }) {
                   className="flex-1 py-2 rounded-lg text-sm font-medium border transition-colors capitalize"
                   style={{
                     background: defaultView === v ? 'var(--accent)' : 'transparent',
-                    color: defaultView === v ? '#000' : 'var(--text-sec)',
+                    color: defaultView === v ? 'var(--accent-text)' : 'var(--text-sec)',
                     borderColor: defaultView === v ? 'var(--accent)' : 'var(--border)'
                   }}>
                   {v}
@@ -92,11 +92,11 @@ export default function CustomizePanel({ onClose }) {
             <div className="space-y-3">
               <label className="flex items-center justify-between cursor-pointer">
                 <span className="text-sm">Show Watchlist</span>
-                <input type="checkbox" checked={showWatchlist} onChange={e => handleShowWatchlist(e.target.checked)} className="w-4 h-4 accent-[#C8FF00]" />
+                <input type="checkbox" checked={showWatchlist} onChange={e => handleShowWatchlist(e.target.checked)} className="w-4 h-4" style={{ accentColor: 'var(--accent)' }} />
               </label>
               <label className="flex items-center justify-between cursor-pointer">
                 <span className="text-sm">Show Sources by default</span>
-                <input type="checkbox" checked={showSources} onChange={e => handleShowSources(e.target.checked)} className="w-4 h-4 accent-[#C8FF00]" />
+                <input type="checkbox" checked={showSources} onChange={e => handleShowSources(e.target.checked)} className="w-4 h-4" style={{ accentColor: 'var(--accent)' }} />
               </label>
             </div>
           </div>
@@ -106,7 +106,7 @@ export default function CustomizePanel({ onClose }) {
           <button
             onClick={onClose}
             className="w-full py-2 rounded-lg text-sm font-semibold"
-            style={{ background: 'var(--accent)', color: '#000', border: 'none', cursor: 'pointer' }}>
+            style={{ background: 'var(--accent)', color: 'var(--accent-text)', border: 'none', cursor: 'pointer' }}>
             Save & Close
           </button>
         </div>

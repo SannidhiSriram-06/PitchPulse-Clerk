@@ -195,19 +195,19 @@ export default function DashboardPage() {
                                     </div>
                                     <div onClick={() => { navigate('/history'); setUserMenuOpen(false) }}
                                         style={{ padding: '0.6rem 1rem', cursor: 'pointer', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                                        onMouseEnter={(e) => e.currentTarget.style.background = '#1a1a1a'}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg)'}
                                         onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                                         <Clock size={14} /> History
                                     </div>
                                     <div onClick={() => { navigate('/settings'); setUserMenuOpen(false) }}
                                         style={{ padding: '0.6rem 1rem', cursor: 'pointer', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}
-                                        onMouseEnter={(e) => e.currentTarget.style.background = '#1a1a1a'}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg)'}
                                         onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                                         <Settings size={14} /> Settings
                                     </div>
                                     <div onClick={handleLogout}
                                         style={{ padding: '0.6rem 1rem', cursor: 'pointer', fontSize: '0.875rem', color: '#EF4444', display: 'flex', alignItems: 'center', gap: '0.5rem', borderTop: '1px solid var(--border)' }}
-                                        onMouseEnter={(e) => e.currentTarget.style.background = '#1a1a1a'}
+                                        onMouseEnter={(e) => e.currentTarget.style.background = 'var(--bg)'}
                                         onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
                                         <LogOut size={14} /> Log out
                                     </div>
@@ -258,21 +258,21 @@ export default function DashboardPage() {
                                         )}
                                         <div style={{ display: 'flex', flexDirection: sidebarOpen ? 'row' : 'column', gap: '0.4rem', flexShrink: 0, alignItems: 'center' }}>
                                             <button onClick={() => navigate(`/brief/new?company=${encodeURIComponent(item.company_name)}`)}
-                                                style={{ background: 'rgba(200,255,0,0.1)', border: '1px solid rgba(200,255,0,0.2)', borderRadius: '4px', padding: '0.3rem 0.5rem', color: 'var(--accent)', cursor: 'pointer', transition: 'background 0.2s' }}
-                                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(200,255,0,0.2)'}
-                                                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(200,255,0,0.1)'}
+                                                style={{ background: 'var(--accent-15)', border: '1px solid var(--accent-20)', borderRadius: '4px', padding: '0.3rem 0.5rem', color: 'var(--accent)', cursor: 'pointer', transition: 'background 0.2s' }}
+                                                onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent-20)'}
+                                                onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent-15)'}
                                                 title="Brief Me">
                                                 <Zap size={12} />
                                             </button>
                                             <button
                                                 onClick={() => setOpenNote(openNote === item.company_name ? null : item.company_name)}
-                                                style={{ background: 'none', border: '1px solid #333', borderRadius: '4px', padding: '0.3rem 0.5rem', color: (noteTexts[item.company_name] || '').trim() ? '#C8FF00' : '#666', cursor: 'pointer', transition: 'color 0.2s' }}
+                                                style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '4px', padding: '0.3rem 0.5rem', color: (noteTexts[item.company_name] || '').trim() ? 'var(--accent)' : 'var(--text-sec)', cursor: 'pointer', transition: 'color 0.2s' }}
                                                 title="Notes"
                                             >
                                                 📝
                                             </button>
                                             {!sidebarOpen && (
-                                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isWithin7Days(item.last_briefed_at) ? '#C8FF00' : '#444444', marginTop: '4px' }} />
+                                                <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: isWithin7Days(item.last_briefed_at) ? 'var(--accent)' : 'var(--border)', marginTop: '4px' }} />
                                             )}
                                             {sidebarOpen && (
                                                 <button onClick={() => removeFromWatchlist(item.id)}
@@ -303,9 +303,9 @@ export default function DashboardPage() {
                                                 }}
                                                 placeholder="Add private notes about this company..."
                                                 rows={3}
-                                                style={{ width: '100%', background: '#1a1a1a', border: '1px solid #333', borderRadius: 4, color: 'var(--text)', fontSize: '0.75rem', padding: '6px 8px', marginTop: 4, resize: 'vertical' }}
+                                                style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 4, color: 'var(--text)', fontSize: '0.75rem', padding: '6px 8px', marginTop: 4, resize: 'vertical' }}
                                             />
-                                            {noteSaved[item.company_name] && <span style={{ fontSize: '0.7rem', color: '#C8FF00' }}>Saved ✓</span>}
+                                            {noteSaved[item.company_name] && <span style={{ fontSize: '0.7rem', color: 'var(--accent)' }}>Saved ✓</span>}
                                         </div>
                                     )}
                                 </div>
@@ -375,15 +375,15 @@ export default function DashboardPage() {
                                             </div>
                                             <div style={{ display: 'flex', gap: '0.4rem', flexShrink: 0 }}>
                                                 <button onClick={() => { setMobileDrawerOpen(false); navigate(`/brief/new?company=${encodeURIComponent(item.company_name)}`) }}
-                                                    style={{ background: 'rgba(200,255,0,0.1)', border: '1px solid rgba(200,255,0,0.2)', borderRadius: '4px', padding: '0.3rem 0.5rem', color: 'var(--accent)', cursor: 'pointer', transition: 'background 0.2s' }}
-                                                    onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(200,255,0,0.2)'}
-                                                    onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(200,255,0,0.1)'}
+                                                    style={{ background: 'var(--accent-15)', border: '1px solid var(--accent-20)', borderRadius: '4px', padding: '0.3rem 0.5rem', color: 'var(--accent)', cursor: 'pointer', transition: 'background 0.2s' }}
+                                                    onMouseEnter={(e) => e.currentTarget.style.background = 'var(--accent-20)'}
+                                                    onMouseLeave={(e) => e.currentTarget.style.background = 'var(--accent-15)'}
                                                     title="Brief Me">
                                                     <Zap size={12} />
                                                 </button>
                                                 <button
                                                     onClick={() => setOpenNote(openNote === item.company_name ? null : item.company_name)}
-                                                    style={{ background: 'none', border: '1px solid #333', borderRadius: '4px', padding: '0.3rem 0.5rem', color: (noteTexts[item.company_name] || '').trim() ? '#C8FF00' : '#666', cursor: 'pointer', transition: 'color 0.2s' }}
+                                                    style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '4px', padding: '0.3rem 0.5rem', color: (noteTexts[item.company_name] || '').trim() ? 'var(--accent)' : 'var(--text-sec)', cursor: 'pointer', transition: 'color 0.2s' }}
                                                     title="Notes"
                                                 >
                                                     📝
@@ -415,9 +415,9 @@ export default function DashboardPage() {
                                                     }}
                                                     placeholder="Add private notes about this company..."
                                                     rows={3}
-                                                    style={{ width: '100%', background: '#1a1a1a', border: '1px solid #333', borderRadius: 4, color: 'var(--text)', fontSize: '0.75rem', padding: '6px 8px', marginTop: 4, resize: 'vertical' }}
+                                                    style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 4, color: 'var(--text)', fontSize: '0.75rem', padding: '6px 8px', marginTop: 4, resize: 'vertical' }}
                                                 />
-                                                {noteSaved[item.company_name] && <span style={{ fontSize: '0.7rem', color: '#C8FF00' }}>Saved ✓</span>}
+                                                {noteSaved[item.company_name] && <span style={{ fontSize: '0.7rem', color: 'var(--accent)' }}>Saved ✓</span>}
                                             </div>
                                         )}
                                     </div>
@@ -455,17 +455,17 @@ export default function DashboardPage() {
                     </div>
 
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '3rem' }}>
-                        <div style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '1.5rem' }}>
+                        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.5rem' }}>
                             <div style={{ color: 'var(--text-sec)', fontSize: '0.8rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Total Briefs</div>
-                            <div style={{ color: '#C8FF00', fontSize: '2.5rem', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif' }}>{briefs.length}</div>
+                            <div style={{ color: 'var(--accent)', fontSize: '2.5rem', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif' }}>{briefs.length}</div>
                         </div>
-                        <div style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '1.5rem' }}>
+                        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.5rem' }}>
                             <div style={{ color: 'var(--text-sec)', fontSize: '0.8rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Watchlist</div>
-                            <div style={{ color: '#C8FF00', fontSize: '2.5rem', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif' }}>{watchlist.length}</div>
+                            <div style={{ color: 'var(--accent)', fontSize: '2.5rem', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif' }}>{watchlist.length}</div>
                         </div>
-                        <div style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                        <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
                             <div style={{ color: 'var(--text-sec)', fontSize: '0.8rem', marginBottom: '0.5rem', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: '600' }}>Last Brief Generated</div>
-                            <div style={{ color: '#C8FF00', fontSize: '1.5rem', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif', marginTop: 'auto', lineHeight: '1.2' }}>
+                            <div style={{ color: 'var(--accent)', fontSize: '1.5rem', fontWeight: '700', fontFamily: 'Space Grotesk, sans-serif', marginTop: 'auto', lineHeight: '1.2' }}>
                                 {briefs.length > 0 ? (
                                     formatLastBriefed(briefs[0].created_at) ||
                                     new Date(briefs[0].created_at.endsWith('Z') || briefs[0].created_at.includes('+') ? briefs[0].created_at : briefs[0].created_at + 'Z').toLocaleDateString(undefined, {month:'short', day:'numeric'})
@@ -479,9 +479,9 @@ export default function DashboardPage() {
                         {loading ? (
                             Array.from({ length: 4 }).map((_, i) => <BriefCardSkeleton key={i} />)
                         ) : filteredBriefs.length === 0 ? (
-                            <div style={{ gridColumn: '1/-1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '6rem 1rem', textAlign: 'center', gap: '1.5rem', background: '#111111', borderRadius: '16px', border: '1px dashed rgba(255,255,255,0.1)' }}>
-                                <div style={{ background: 'rgba(200,255,0,0.1)', padding: '1.25rem', borderRadius: '50%' }}>
-                                    <Zap size={40} color="#C8FF00" />
+                            <div style={{ gridColumn: '1/-1', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '6rem 1rem', textAlign: 'center', gap: '1.5rem', background: 'var(--surface)', borderRadius: '16px', border: '1px dashed var(--border)' }}>
+                                <div style={{ background: 'var(--accent-15)', padding: '1.25rem', borderRadius: '50%' }}>
+                                    <Zap size={40} color="var(--accent)" />
                                 </div>
                                 <div>
                                     <h3 style={{ color: 'var(--text)', fontSize: '1.5rem', fontWeight: '700', marginBottom: '0.5rem' }}>No briefs yet</h3>
@@ -501,9 +501,9 @@ export default function DashboardPage() {
                             
                             return (
                                 <div key={brief.id} onClick={() => navigate(`/brief/${brief.id}`)}
-                                    style={{ background: '#111111', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '1.5rem', cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column', minHeight: '260px' }}
-                                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = '#C8FF00'; e.currentTarget.style.transform = 'translateY(-2px)' }}
-                                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'rgba(255,255,255,0.08)'; e.currentTarget.style.transform = 'translateY(0)' }}>
+                                    style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', padding: '1.5rem', cursor: 'pointer', transition: 'all 0.2s ease', display: 'flex', flexDirection: 'column', minHeight: '260px' }}
+                                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent)'; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.transform = 'translateY(0)' }}>
                                     
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.75rem' }}>
                                         <h3 style={{ fontWeight: '700', fontSize: '1.25rem', letterSpacing: '-0.3px', color: 'var(--text)', flex: 1, paddingRight: '1rem' }}>{brief.company_name}</h3>
@@ -522,7 +522,7 @@ export default function DashboardPage() {
                                     
                                     <p style={{ color: 'var(--text-sec)', fontSize: '0.9rem', lineHeight: '1.6', flex: 1, marginBottom: '1.25rem', position: 'relative' }}>
                                         {snippet}
-                                        <span style={{ position: 'absolute', bottom: 0, right: 0, width: '100%', height: '2rem', background: 'linear-gradient(transparent, #111111)' }} />
+                                        <span style={{ position: 'absolute', bottom: 0, right: 0, width: '100%', height: '2rem', background: 'linear-gradient(transparent, var(--surface))' }} />
                                     </p>
                                     
                                     {sections.length > 0 && (
@@ -535,7 +535,7 @@ export default function DashboardPage() {
                                         </div>
                                     )}
 
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '1rem', marginTop: 'auto' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '1rem', marginTop: 'auto' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#666' }}>
                                             <Clock size={12} />
                                             <span style={{ fontSize: '0.75rem' }}>{formatDate(brief.created_at)}</span>

@@ -79,25 +79,26 @@ export default function PWAInstallBanner() {
           }
         `}
       </style>
-      <div className="max-w-4xl mx-auto bg-[#111111] border border-white/10 rounded-2xl shadow-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 font-['Space_Grotesk']">
+      <div className="max-w-4xl mx-auto border rounded-2xl shadow-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4 font-['Space_Grotesk']" style={{ background: 'var(--surface)', borderColor: 'var(--border)' }}>
         
         <div className="flex items-center gap-3 w-full sm:w-auto">
           <img src="/favicon.svg" alt="PitchPulse" className="w-10 h-10 object-contain flex-shrink-0" />
           <div className="flex flex-col">
-            <span className="text-white font-bold text-base leading-tight">PitchPulse</span>
-            <span className="text-white/70 text-sm">Add to home screen for quick access</span>
+            <span className="font-bold text-base leading-tight" style={{ color: 'var(--text-primary)' }}>PitchPulse</span>
+            <span className="text-sm" style={{ color: 'var(--text-sec)' }}>Add to home screen for quick access</span>
           </div>
         </div>
 
         <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
           {isIOS ? (
-            <div className="text-xs text-[#C8FF00] font-medium bg-[#C8FF00]/10 px-3 py-2 rounded-lg text-center flex-1 sm:flex-none whitespace-nowrap">
+            <div className="text-xs font-medium px-3 py-2 rounded-lg text-center flex-1 sm:flex-none whitespace-nowrap" style={{ color: 'var(--accent)', backgroundColor: 'var(--accent-15)' }}>
               Tap Share <span className="inline-block mx-1">↑</span> Add to Home Screen
             </div>
           ) : (
             <button 
               onClick={handleInstallClick}
-              className="bg-[#C8FF00] text-black font-semibold px-6 py-2 rounded-xl hover:bg-[#b3e600] transition-colors flex-1 sm:flex-none text-sm"
+              className="font-semibold px-6 py-2 rounded-xl transition-colors flex-1 sm:flex-none text-sm"
+              style={{ background: 'var(--accent)', color: 'var(--accent-text)' }}
             >
               Install
             </button>
@@ -105,7 +106,8 @@ export default function PWAInstallBanner() {
           
           <button 
             onClick={handleDismiss}
-            className="text-white/50 hover:text-white p-2 flex-shrink-0 transition-colors bg-white/5 hover:bg-white/10 rounded-full"
+            className="p-2 flex-shrink-0 transition-colors rounded-full"
+            style={{ color: 'var(--text-sec)', backgroundColor: 'transparent' }}
             aria-label="Dismiss"
           >
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
