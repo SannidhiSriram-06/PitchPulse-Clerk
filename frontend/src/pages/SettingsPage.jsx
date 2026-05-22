@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useClerkToken } from '../hooks/useClerkToken'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Sun, Moon } from 'lucide-react'
 import useAuthStore from '../store/authStore'
@@ -6,19 +7,21 @@ import usePrefsStore from '../store/prefsStore'
 import api from '../lib/api'
 import useIsMobile from '../hooks/useIsMobile'
 import useThemeStore from '../store/themeStore'
+import { useClerk, useUser } from '@clerk/clerk-react'
 
 export default function SettingsPage() {
+    useClerkToken()
+    const { signOut } = useClerk()
     const navigate = useNavigate()
     const isMobile = useIsMobile()
-    const { user, logout } = useAuthStore()
+    const { user: clerkUser } = useUser()
+    const { user, logout, syncClerkUser } = useAuthStore()
     const { defaultLength, defaultView, setPrefs } = usePrefsStore()
     const { theme, toggleTheme } = useThemeStore()
 
-    const [currentPassword, setCurrentPassword] = useState('')
-    const [newPassword, setNewPassword] = useState('')
-    const [pwMsg, setPwMsg] = useState('')
-    const [pwError, setPwError] = useState('')
-    const [pwLoading, setPwLoading] = useState(false)
+    useEffect(() => {
+        if (clerkUser) syncClerkUser(clerkUser)
+    }, [clerkUser])
 
     const [length, setLength] = useState(defaultLength || 'medium')
     const [view, setView] = useState(defaultView || 'tabs')
@@ -26,21 +29,6 @@ export default function SettingsPage() {
 
     const [deleteModal, setDeleteModal] = useState(false)
     const [deleteLoading, setDeleteLoading] = useState(false)
-
-    const handleChangePassword = async () => {
-        setPwMsg(''); setPwError('')
-        if (!currentPassword || !newPassword) { setPwError('Both fields are required.'); return }
-        if (newPassword.length < 8) { setPwError('New password must be at least 8 characters.'); return }
-        setPwLoading(true)
-        try {
-            await api.post('/api/auth/change-password', { current_password: currentPassword, new_password: newPassword })
-            setPwMsg('Password updated successfully.')
-            setCurrentPassword(''); setNewPassword('')
-        } catch (err) {
-            setPwError(err.response?.data?.error || 'Failed to update password.')
-        }
-        setPwLoading(false)
-    }
 
     const handleSavePrefs = async () => {
         setPrefs({ defaultLength: length, defaultView: view })
@@ -55,8 +43,7 @@ export default function SettingsPage() {
         setDeleteLoading(true)
         try {
             await api.delete('/api/auth/account')
-            logout()
-            navigate('/')
+            signOut(() => window.location.href = '/')
         } catch (e) { }
         setDeleteLoading(false)
     }
@@ -76,20 +63,6 @@ export default function SettingsPage() {
         letterSpacing: '0.1em',
         display: 'block',
         marginBottom: '0.5rem'
-    }
-
-    const inputStyle = {
-        width: '100%',
-        background: 'var(--bg)',
-        border: '1px solid var(--border)',
-        borderRadius: '4px',
-        padding: '0.75rem',
-        color: 'var(--text)',
-        fontSize: '0.875rem',
-        fontFamily: 'Space Grotesk, sans-serif',
-        outline: 'none',
-        boxSizing: 'border-box',
-        marginBottom: '0.75rem'
     }
 
     return (
@@ -121,22 +94,31 @@ export default function SettingsPage() {
                         {user?.email}
                     </div>
 
-                    <p style={{ fontSize: '0.8rem', fontWeight: '600', marginBottom: '0.75rem' }}>Change Password</p>
-                    <label style={labelStyle}>Current Password</label>
-                    <input type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)}
-                        placeholder="Current password" style={inputStyle} />
-                    <label style={labelStyle}>New Password</label>
-                    <input type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleChangePassword()}
-                        placeholder="Min. 8 characters" style={{ ...inputStyle, marginBottom: '1rem' }} />
-
-                    {pwError && <div style={{ color: '#EF4444', fontSize: '0.8rem', marginBottom: '0.75rem' }}>{pwError}</div>}
-                    {pwMsg && <div style={{ color: '#22C55E', fontSize: '0.8rem', marginBottom: '0.75rem' }}>{pwMsg}</div>}
-
-                    <button onClick={handleChangePassword} disabled={pwLoading}
-                        style={{ background: 'var(--accent)', border: 'none', borderRadius: '4px', padding: '0.6rem 1.25rem', color: 'var(--accent-text)', fontWeight: '700', cursor: 'pointer', fontSize: '0.875rem', fontFamily: 'Space Grotesk, sans-serif' }}>
-                        {pwLoading ? 'Updating...' : 'Update Password'}
-                    </button>
+                    <div style={{ marginBottom: '1.5rem' }}>
+                        <p style={{ fontSize: '0.8rem', fontWeight: '600', marginBottom: '0.5rem' }}>
+                            Password & Security
+                        </p>
+                        <p style={{ color: 'var(--text-sec)', fontSize: '0.875rem', marginBottom: '1rem' }}>
+                            Password and security settings are managed through your account portal.
+                        </p>
+                        <a
+                            href="https://accounts.clerk.dev/user"
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{
+                                display: 'inline-block',
+                                background: 'var(--surface)',
+                                border: '1px solid var(--border)',
+                                borderRadius: '4px',
+                                padding: '0.6rem 1.25rem',
+                                color: 'var(--text)',
+                                fontSize: '0.875rem',
+                                textDecoration: 'none'
+                            }}
+                        >
+                            Manage Account →
+                        </a>
+                    </div>
                 </div>
 
                 {/* Preferences */}

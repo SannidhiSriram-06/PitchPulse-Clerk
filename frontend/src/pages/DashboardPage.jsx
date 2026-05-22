@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useClerkToken } from '../hooks/useClerkToken'
 import { startTour } from '../hooks/useTour'
 import { useNavigate } from 'react-router-dom'
 import { Plus, LogOut, Settings, Clock, Bookmark, Zap, X, Sun, Moon, ChevronLeft, ChevronRight, Menu } from 'lucide-react'
@@ -9,10 +10,14 @@ import useThemeStore from '../store/themeStore'
 import CustomizePanel from '../components/CustomizePanel'
 import { BriefCardSkeleton, WatchlistItemSkeleton } from '../components/Skeletons'
 import usePrefsStore from '../store/prefsStore'
+import { useClerk, useUser } from '@clerk/clerk-react'
 
 export default function DashboardPage() {
+    useClerkToken()
+    const { signOut } = useClerk()
     const navigate = useNavigate()
-    const { user, logout } = useAuthStore()
+    const { user: clerkUser } = useUser()
+    const { user, logout, syncClerkUser } = useAuthStore()
     const { loadPrefs, showWatchlist } = usePrefsStore()
 
     const [briefs, setBriefs] = useState([])
@@ -31,6 +36,10 @@ export default function DashboardPage() {
     const [noteSaved, setNoteSaved] = useState({})
 
 
+
+    useEffect(() => {
+        if (clerkUser) syncClerkUser(clerkUser)
+    }, [clerkUser])
 
     useEffect(() => {
         fetchData()
@@ -103,8 +112,7 @@ export default function DashboardPage() {
     }
 
     const handleLogout = () => {
-        logout()
-        navigate('/')
+        signOut(() => window.location.href = '/')
     }
 
     const filteredBriefs = briefs.filter((b) =>

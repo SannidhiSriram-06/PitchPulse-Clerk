@@ -27,6 +27,9 @@ class Config:
     RESEND_API_KEY = os.getenv("RESEND_API_KEY", "")
     FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:5173")
 
+    # Clerk
+    CLERK_WEBHOOK_SECRET = os.getenv("CLERK_WEBHOOK_SECRET", "")
+
     # Rate limiting (free tier)
     FREE_TIER_HOURLY_LIMIT = 3
 

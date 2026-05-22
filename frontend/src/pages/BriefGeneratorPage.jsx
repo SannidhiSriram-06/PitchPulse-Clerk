@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useClerkToken } from '../hooks/useClerkToken'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ArrowLeft, Sun, Moon } from 'lucide-react'
 import useBriefStore from '../store/briefStore'
@@ -33,6 +34,7 @@ const TEMPLATES = {
 }
 
 export default function BriefGeneratorPage() {
+    useClerkToken()
     const navigate = useNavigate()
     const [searchParams] = useSearchParams()
     const { generating, statusMessage, generateBrief, setStatusMessage } = useBriefStore()

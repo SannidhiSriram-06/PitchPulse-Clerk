@@ -174,7 +174,7 @@ def build_crew(company_name: str, length: str, sections: list, custom_prompt: st
         agents=[researcher, analyst, briefing_writer],
         tasks=[research_task, analysis_task, briefing_task],
         process=Process.sequential,
-        verbose=True,
+        verbose=False,
     )
 
     return crew
@@ -347,7 +347,7 @@ def build_comparison_crew(company1: str, company2: str, length: str, custom_prom
         agents=[researcher1, researcher2, analyst, formatter],
         tasks=[task1, task2, task3, task4],
         process=Process.sequential,
-        verbose=True,
+        verbose=False,
     )
 
 

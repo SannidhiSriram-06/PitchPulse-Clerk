@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useClerkToken } from '../hooks/useClerkToken'
 import { useNavigate } from 'react-router-dom'
 import { ArrowLeft, Trash2, Bookmark, Search, Sun, Moon } from 'lucide-react'
 import api from '../lib/api'
@@ -9,6 +10,7 @@ import { BriefCardSkeleton } from '../components/Skeletons'
 const DATE_FILTERS = ['all', 'today', 'this week', 'this month']
 
 export default function HistoryPage() {
+    useClerkToken()
     const navigate = useNavigate()
     const isMobile = useIsMobile()
     const { theme, toggleTheme } = useThemeStore()

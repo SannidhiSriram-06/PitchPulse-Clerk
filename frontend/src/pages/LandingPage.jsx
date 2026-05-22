@@ -18,13 +18,13 @@ export default function LandingPage() {
                     </span>
                     <div style={{ display: 'flex', gap: '1rem' }}>
                         <button
-                            onClick={() => navigate('/login')}
+                            onClick={() => navigate('/sign-in')}
                             style={{ background: 'none', border: '1px solid var(--border)', color: 'var(--text)', padding: '0.4rem 1rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem' }}
                         >
                             Log in
                         </button>
                         <button
-                            onClick={() => navigate('/register')}
+                            onClick={() => navigate('/sign-up')}
                             style={{ background: 'var(--accent)', border: 'none', color: 'var(--accent-text)', padding: '0.4rem 1rem', borderRadius: '4px', cursor: 'pointer', fontSize: '0.875rem', fontWeight: '700' }}
                         >
                             Get Started
@@ -49,7 +49,7 @@ export default function LandingPage() {
                     <div style={{ display: 'flex', gap: '1rem', flexDirection: isMobile ? 'column' : 'row', flexWrap: 'wrap' }}>
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             <button
-                                onClick={() => navigate('/register')}
+                                onClick={() => navigate('/sign-up')}
                                 style={{ background: 'var(--accent)', border: 'none', color: 'var(--accent-text)', padding: '0.875rem 2rem', borderRadius: '4px', cursor: 'pointer', fontSize: '1rem', fontWeight: '700', letterSpacing: '-0.3px' }}
                             >
                                 Get your free brief →
@@ -57,7 +57,7 @@ export default function LandingPage() {
                             <span style={{ fontSize: '0.75rem', color: 'var(--text-sec)', textAlign: 'center' }}>Free to use · No credit card · 30-second setup</span>
                         </div>
                         <button
-                            onClick={() => navigate('/login')}
+                            onClick={() => navigate('/sign-in')}
                             style={{ background: 'none', border: '1px solid #333333', color: 'var(--text)', padding: '0.875rem 2rem', borderRadius: '4px', cursor: 'pointer', fontSize: '1rem' }}
                         >
                             See Demo →

@@ -3,7 +3,6 @@ import api from '../lib/api'
 
 const useBriefStore = create((set) => ({
     currentBrief: null,
-    history: [],
     generating: false,
     statusMessage: '',
 
@@ -19,14 +18,8 @@ const useBriefStore = create((set) => ({
         }
     },
 
-    saveBrief: async (briefId) => {
-        const res = await api.patch(`/api/briefs/${briefId}/save`)
-        return res.data
-    },
-
     setStatusMessage: (msg) => set({ statusMessage: msg }),
     setCurrentBrief: (brief) => set({ currentBrief: brief }),
-    setHistory: (history) => set({ history }),
 }))
 
 export default useBriefStore

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useClerkToken } from '../hooks/useClerkToken'
 import { useParams, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Bookmark, BookmarkCheck, Share2, RefreshCw, ThumbsUp, ThumbsDown, ChevronDown, ChevronUp, Sun, Moon, Download } from 'lucide-react'
 import { jsPDF } from 'jspdf'
@@ -34,6 +35,7 @@ const CONFIDENCE_COLORS = {
 }
 
 export default function BriefDisplayPage() {
+    useClerkToken()
     const { id, token } = useParams()
     const navigate = useNavigate()
     const { defaultView, showSources } = usePrefsStore()
